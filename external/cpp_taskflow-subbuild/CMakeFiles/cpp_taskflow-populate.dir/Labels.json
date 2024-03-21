@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "F:/Yicvot/Yicvot/external/cpp_taskflow-subbuild/CMakeFiles/cpp_taskflow-populate"
+		},
+		{
+			"file" : "F:/Yicvot/Yicvot/external/cpp_taskflow-subbuild/CMakeFiles/cpp_taskflow-populate.rule"
+		},
+		{
+			"file" : "F:/Yicvot/Yicvot/external/cpp_taskflow-subbuild/CMakeFiles/cpp_taskflow-populate-complete.rule"
+		},
+		{
+			"file" : "F:/Yicvot/Yicvot/external/cpp_taskflow-subbuild/cpp_taskflow-populate-prefix/src/cpp_taskflow-populate-stamp/cpp_taskflow-populate-build.rule"
+		},
+		{
+			"file" : "F:/Yicvot/Yicvot/external/cpp_taskflow-subbuild/cpp_taskflow-populate-prefix/src/cpp_taskflow-populate-stamp/cpp_taskflow-populate-configure.rule"
+		},
+		{
+			"file" : "F:/Yicvot/Yicvot/external/cpp_taskflow-subbuild/cpp_taskflow-populate-prefix/src/cpp_taskflow-populate-stamp/cpp_taskflow-populate-download.rule"
+		},
+		{
+			"file" : "F:/Yicvot/Yicvot/external/cpp_taskflow-subbuild/cpp_taskflow-populate-prefix/src/cpp_taskflow-populate-stamp/cpp_taskflow-populate-install.rule"
+		},
+		{
+			"file" : "F:/Yicvot/Yicvot/external/cpp_taskflow-subbuild/cpp_taskflow-populate-prefix/src/cpp_taskflow-populate-stamp/cpp_taskflow-populate-mkdir.rule"
+		},
+		{
+			"file" : "F:/Yicvot/Yicvot/external/cpp_taskflow-subbuild/cpp_taskflow-populate-prefix/src/cpp_taskflow-populate-stamp/cpp_taskflow-populate-patch.rule"
+		},
+		{
+			"file" : "F:/Yicvot/Yicvot/external/cpp_taskflow-subbuild/cpp_taskflow-populate-prefix/src/cpp_taskflow-populate-stamp/cpp_taskflow-populate-test.rule"
+		},
+		{
+			"file" : "F:/Yicvot/Yicvot/external/cpp_taskflow-subbuild/cpp_taskflow-populate-prefix/src/cpp_taskflow-populate-stamp/cpp_taskflow-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"cpp_taskflow-populate"
+		],
+		"name" : "cpp_taskflow-populate"
+	}
+}

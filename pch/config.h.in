@@ -1,0 +1,14 @@
+//
+// Created by lenovo on 11/24/2023.
+//
+
+#ifndef VULKAN_CONFIG_H
+#define VULKAN_CONFIG_H
+
+#define texPath "@texPath@"
+
+#define shaderPath "@shaderPath@"
+
+#define imGuiIniPath "@imguiPath@"
+
+#endif //VULKAN_CONFIG_H
