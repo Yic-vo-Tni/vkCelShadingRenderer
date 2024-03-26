@@ -6,6 +6,7 @@
     <mapping directory="$PROJECT_DIR$/external/spdlog" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/stb" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/imgui" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/nvpro_core" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/saba" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/saba/external/glfw" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/saba/external/glslang" vcs="Git" />

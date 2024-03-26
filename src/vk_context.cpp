@@ -27,6 +27,8 @@ namespace yic {
         this            ->preSkyContext();
         this            ->prePmxContext();
 
+        mPmxModel = mPmxContext->getPmxModel();
+
         return *this;
     }
 

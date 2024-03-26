@@ -8,31 +8,6 @@
 
 namespace ke_q{
 
-//    inline std::string findFile(const std::string& inFilename, const std::vector<std::string>& directories, bool warn = false)
-//    {
-//        std::ifstream stream;
-//
-//        {
-//            stream.open(inFilename.c_str());
-//            if(stream.is_open())
-//            {
-//                return inFilename;
-//            }
-//        }
-//
-//        for(const auto& directory : directories)
-//        {
-//            std::string filename = directory + "/" + inFilename;
-//            stream.open(filename.c_str());
-//            if(stream.is_open())
-//            {
-//                return filename;
-//            }
-//        }
-//
-//        return {};
-//    }
-
     inline std::string loadFile(const std::string& filename, bool binary = true)
     {
         std::string   result;
@@ -50,26 +25,13 @@ namespace ke_q{
         return result;
     }
 
-//    inline std::string loadFile(const std::string& filename, bool binary)
-//    {
-//        return loadFile(filename, binary);
-//    }
-//
-//
-//    inline std::string loadFile(const std::string& filename, bool binary, const std::vector<std::string>& directories, std::string& filenameFound, bool warn = false){
-//        filenameFound = findFile(filename, directories, warn);
-//        if (filenameFound.empty()){
-//            return {};
-//        } else{
-//            return loadFile(filenameFound, binary);
-//        }
-//    }
-//
-//    inline std::string loadFile(const std::string filename, bool binary, const std::vector<std::string>& directories, bool warn = false){
-//        std::string fileNameFound;
-//        return loadFile(filename, binary, directories, fileNameFound, warn);
-//    }
+    inline vk::DeviceAddress getBufDeviceAddress(vk::Device device, vk::Buffer buffer){
+        if (!buffer){
+            return 0;
+        }
 
+        return device.getBufferAddress(vk::BufferDeviceAddressInfo{buffer});
+    }
 
 }
 

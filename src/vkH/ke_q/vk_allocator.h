@@ -15,6 +15,11 @@ namespace yic {
         vk::DeviceMemory deviceMemory;
     };
 
+    struct AccelKhr {
+        Buffer buffer;
+        vk::AccelerationStructureKHR accel{};
+    };
+
     struct Image{
         vk::Image image;
         vk::ImageView imageView;
@@ -40,6 +45,8 @@ namespace yic {
 
         void allocMem(const MemReqs& memReqs, const BindMem& bindMem,
                       const vk::MemoryPropertyFlags& memProperty = defaultMemProperty);
+        void allocMem(const MemReqs& memReqs, const BindMem& bindMem, vk::MemoryAllocateFlagsInfo flagsInfo,
+                      const vk::MemoryPropertyFlags& memProperty = defaultMemProperty);
         vk::DeviceMemory allocMem(const MemReqs& memReqs, const vk::MemoryPropertyFlags& memProperty = defaultMemProperty);
 
         void allocBuffer(vk::DeviceSize deviceSize, const void* data, vk::BufferUsageFlags usage,
@@ -47,6 +54,8 @@ namespace yic {
         void allocBuffer(vk::DeviceSize deviceSize, const void* data, vk::BufferUsageFlags usage,
                          const MemReqs& memReqs, const BindMem& bindMem,
                          vk::MemoryPropertyFlags memPro, bool unmap = true);
+        void allocBufferDeviceAddress(vk::DeviceSize deviceSize, const void* data, vk::BufferUsageFlags usage,
+                                      const MemReqs& memReqs, const BindMem& bindMem, bool unmap = true);
 
         [[nodiscard]] inline auto& getData() const  { return mData;}
         [[nodiscard]] inline auto& getBuffer() const { return mBuffer.buffer;}
@@ -89,6 +98,7 @@ namespace yic {
         Buffer mStagingBuffer;
         bool mUnmap = true;
 
+    protected:
         void free() const{
             mDevice.destroy(mBuffer.buffer);
             mDevice.free(mBuffer.deviceMemory);
@@ -110,9 +120,63 @@ namespace yic {
         }
     };
 
+    class genericAccelerationManager : public vkAllocator{
+    public:
+        ~genericAccelerationManager() { if (mUnmap) unmap(); };
+
+        genericAccelerationManager(vk::DeviceSize deviceSize, vk::BufferUsageFlags usage){
+            allocBufferDeviceAddress(deviceSize, nullptr, usage, defaultMemReqs, defaultBindMem, false);
+        }
+
+        struct fn {
+        public:
+            static AccelKhr createAcceleration(vk::AccelerationStructureCreateInfoKHR &createInfo) {
+                AccelKhr accelKhr;
+                accelKhr.buffer.buffer = std::make_unique<genericAccelerationManager>(createInfo.size,
+                                                                                vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR |
+                                                                                vk::BufferUsageFlagBits::eShaderDeviceAddress)->getBuffer();
+                createInfo.buffer = accelKhr.buffer.buffer;
+                accelKhr.accel = mDevice.createAccelerationStructureKHR(createInfo, nullptr, gl::dispatchLoaderDynamic_);
+
+                return accelKhr;
+            }
+
+            static void destroy(AccelKhr& accel){
+                mDevice.destroy(accel.accel, {}, gl::dispatchLoaderDynamic_);
+                mDevice.destroy(accel.buffer.buffer);
+
+                accel = AccelKhr();
+            }
+        };
+
+        void free() { mDevice.destroy(mBuffer.buffer); }
+
+    private:
+    };
+
+
 } // yic
 
-    using genericBufferManagerUptr = std::unique_ptr<yic::genericBufferManager>;
+struct allocManager{
+    using bufUptr = std::unique_ptr<yic::genericBufferManager>;
+    using bufAccelAddressUptr = std::unique_ptr<yic::genericAccelerationManager>;
+
+    struct build{
+        static bufAccelAddressUptr bufAccelAddressUptr(vk::DeviceSize deviceSize, vk::BufferUsageFlags usage){
+            return std::make_unique<yic::genericAccelerationManager>(deviceSize, usage);
+        }
+    };
+
+    struct fn{
+        static yic::AccelKhr createAccel(vk::AccelerationStructureCreateInfoKHR &createInfo){
+            return yic::genericAccelerationManager::fn::createAcceleration(createInfo);
+        }
+    };
+};
+
+struct allocFn{
+    using accel = yic::genericAccelerationManager::fn;
+};
 
 #endif //VULKAN_VK_ALLOCATOR_H
 

@@ -4,6 +4,9 @@
 
 #include "vk_rhi.h"
 
+#define VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+#include <vulkan/vulkan.hpp>
+
 namespace yic {
 
     RHI::RHI() {
@@ -20,14 +23,16 @@ namespace yic {
         Window::get(1200, 800, "Yicvot")->glfwCallback();
 
         /// vk init
-        vk::PhysicalDeviceAccelerationStructureFeaturesKHR accelFeature{};
-        vk::PhysicalDeviceRayTracingPipelineFeaturesKHR rtFeature{};
+        vk::PhysicalDeviceAccelerationStructureFeaturesKHR accelFeature{vk::True};
+        vk::PhysicalDeviceRayTracingPipelineFeaturesKHR rtFeature{vk::True};
+        vk::PhysicalDeviceBufferDeviceAddressFeatures bufDeviceFeature{vk::True};
         contextCreateInfo createInfo{};
         createInfo.addInstanceLayers("VK_LAYER_KHRONOS_validation")
                 .addInstanceExtensions("VK_EXT_debug_utils")
                 .addPhysicalDeviceExtensions("VK_KHR_swapchain")
                 .addPhysicalDeviceExtensions(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME, &accelFeature)
                 .addPhysicalDeviceExtensions(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME, &rtFeature)
+                .addPhysicalDeviceExtensions(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME, &bufDeviceFeature)
                 .addPhysicalDeviceExtensions(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
 
         vk_init::get(createInfo)->oneTimeInitialization();
@@ -38,6 +43,7 @@ namespace yic {
                  .createRenderPass()
                  .createFrameBuffer();
 
+
         vkContext.prepareEveryContext();
 
         /// imgui
@@ -47,6 +53,11 @@ namespace yic {
 
         taskerBuilder::executor::executeTaskflow();
 
+        mvkRayTracing.init(vk_init::get())
+                    .initRayTracing(vkContext.getPmxModel())
+                    .createBottomLevelAS()
+                    .createTopLevelAS();
+                    ;
     }
 
     void RHI::drawFrame() {

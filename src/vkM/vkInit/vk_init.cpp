@@ -18,7 +18,7 @@ namespace yic {
 
     vk_init::~vk_init() {
         vkDestroyAll(device_);
-        vkDebug(instance_.destroy(debugMessenger_, nullptr, dispatchLoaderDynamic_));
+        vkDebug(instance_.destroy(debugMessenger_, nullptr, gl::dispatchLoaderDynamic_));
         vkDestroyAll(instance_);
     }
 
@@ -52,13 +52,14 @@ namespace yic {
     }
 
     vk_init &vk_init::setupDebugMessenger() {
-        dispatchLoaderDynamic_ = vk::DispatchLoaderDynamic(instance_, vkGetInstanceProcAddr);
+        //dispatchLoaderDynamic_ = vk::DispatchLoaderDynamic(instance_, vkGetInstanceProcAddr);
+        gl::dispatchLoaderDynamic_ = vk::DispatchLoaderDynamic(instance_, vkGetInstanceProcAddr);
         vk::DebugUtilsMessengerCreateInfoEXT createInfo{{},
                 vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | info_.debugCreateInfo_.severityFlags,
                 vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | info_.debugCreateInfo_.typeFlags,
                 debugCallback, nullptr};
 
-        vkDebug{vkCreate([&](){ debugMessenger_ = instance_.createDebugUtilsMessengerEXT(createInfo, nullptr, dispatchLoaderDynamic_);}, "create debug message");}
+        vkDebug{vkCreate([&](){ debugMessenger_ = instance_.createDebugUtilsMessengerEXT(createInfo, nullptr, gl::dispatchLoaderDynamic_);}, "create debug message");}
 
         return *this;
     }
@@ -103,9 +104,16 @@ namespace yic {
 
         info_.features2.features.setSampleRateShading(vk::True);
 
-        vk::DeviceCreateInfo createInfo{{}, queueCreateInfos, {}, info_.physicalExtensions_, &info_.features2.features};
+//        vk::DeviceCreateInfo createInfo{{}, queueCreateInfos, {}, info_.physicalExtensions_, &info_.features2.features};
+//        createInfo.pNext = &info_.features2;
+        vk::DeviceCreateInfo createInfo{};
+        createInfo.setQueueCreateInfos(queueCreateInfos)
+                .setPEnabledExtensionNames(info_.physicalExtensions_)
+                .setPNext(&info_.features2);
 
         vkCreate([&](){ device_ = physicalDevice_.createDevice(createInfo);}, "create logical device");
+        //dispatchLoaderDynamic_.init(device_);
+        gl::dispatchLoaderDynamic_.init(device_);
 
         mGraphicsQueue = device_.getQueue(graphicsQueueFamilies, 0);
         mTransferQueue = device_.getQueue(mTransferQueueFamily, 0);

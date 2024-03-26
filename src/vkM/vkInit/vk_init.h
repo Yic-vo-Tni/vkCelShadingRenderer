@@ -35,6 +35,8 @@ namespace yic {
         [[nodiscard]] auto& device() const { return device_;}
         [[nodiscard]] auto& surfaceKhr() const { return surfaceKhr_;}
 
+        //[[nodiscard]] inline auto& getDispatchLoaderDynamic() const { return dispatchLoaderDynamic_;}
+
         [[nodiscard]] auto& graphicsQueue() const { return mGraphicsQueue;}
         [[nodiscard]] auto& getGraphicsFamilyIndices() const { return graphicsQueueFamilies; }
 
@@ -44,7 +46,7 @@ namespace yic {
     private:
         vk::Instance instance_{VK_NULL_HANDLE};
 
-        vk::DispatchLoaderDynamic dispatchLoaderDynamic_;
+        //vk::DispatchLoaderDynamic dispatchLoaderDynamic_;
         vk::DebugUtilsMessengerEXT debugMessenger_{VK_NULL_HANDLE};
 
         vk::SurfaceKHR surfaceKhr_{VK_NULL_HANDLE};

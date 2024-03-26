@@ -36,6 +36,23 @@ namespace yic {
         if (unmap) { this->unmap(); mUnmap = false; }
     }
 
+    void vkAllocator::allocBufferDeviceAddress(vk::DeviceSize deviceSize, const void *data, vk::BufferUsageFlags usage,
+                                               const yic::vkAllocator::MemReqs &memReqs,
+                                               const yic::vkAllocator::BindMem &bindMem, bool unmap) {
+        vk::BufferCreateInfo bufferInfo{
+                {}, deviceSize, usage, vk::SharingMode::eExclusive
+        };
+        mDeviceSize = deviceSize;
+        mBuffer.buffer = mDevice.createBuffer(bufferInfo);
+
+        vk::MemoryAllocateFlagsInfo flagsInfo{vk::MemoryAllocateFlagBits::eDeviceAddress};
+        allocMem(memReqs, bindMem, flagsInfo);
+
+        mData = mDevice.mapMemory(mBuffer.deviceMemory, 0, deviceSize);
+        if (data) memcpy(mData, data, deviceSize);
+        if (unmap) { this->unmap(); mUnmap = false; }
+    }
+
     void vkAllocator::allocBuffer(vk::DeviceSize deviceSize, const void *data, vk::BufferUsageFlags usage,
                                   const yic::vkAllocator::MemReqs &memReqs, const yic::vkAllocator::BindMem &bindMem,
                                   vk::MemoryPropertyFlags memPro, bool unmap) {
@@ -64,6 +81,17 @@ namespace yic {
         bindMem();
     }
 
+    void vkAllocator::allocMem(const yic::vkAllocator::MemReqs &memReqs, const yic::vkAllocator::BindMem &bindMem,
+                               vk::MemoryAllocateFlagsInfo flagsInfo, const vk::MemoryPropertyFlags &memProperty) {
+        vk::MemoryRequirements memoryRequirements = memReqs();
+        vk::MemoryAllocateInfo allocateInfo{
+                memoryRequirements.size,
+                vk_fn::getMemoryType(mPhysicalDevice, memoryRequirements.memoryTypeBits, memProperty), &flagsInfo
+        };
+        mBuffer.deviceMemory = mDevice.allocateMemory(allocateInfo);
+        bindMem();
+    }
+
     vk::DeviceMemory vkAllocator::allocMem(const yic::vkAllocator::MemReqs &memReqs, const vk::MemoryPropertyFlags &memProperty) {
         vk::MemoryRequirements memoryRequirements = memReqs();
         vk::MemoryAllocateInfo allocateInfo{
@@ -78,6 +106,8 @@ namespace yic {
         return *this;
     }
 
+
+    /////////////////////////////////
 
 
 

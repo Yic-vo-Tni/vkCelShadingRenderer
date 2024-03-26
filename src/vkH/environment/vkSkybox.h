@@ -36,6 +36,7 @@ namespace yic {
         }
 
         vk::CommandBuffer& getActiveCmdBuf() {return mCommandBuffers[mSwapchain.getActiveImageIndex()];};
+        [[nodiscard]] inline auto& getActiveFramebuffer()  { return mSkyFrameBuffers[eSkybox][mSwapchain.getActiveImageIndex()];}
 
     private:
         vkSkybox& createSkyRenderPass();
@@ -68,7 +69,7 @@ namespace yic {
         std::unordered_map<skyPipeTypes, std::vector<vk::Framebuffer>> mSkyFrameBuffers;
         std::unordered_map<skyPipeTypes, vkDescriptor> mSkyboxDescriptor;
 
-        genericBufferManagerUptr mCameraVecBuf{};
+        allocManager::bufUptr mCameraVecBuf{};
         genericSkyboxManagerSptr mSkybox{};
     };
 

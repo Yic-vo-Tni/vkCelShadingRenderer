@@ -6,6 +6,7 @@
 #define VULKAN_VK_RHI_H
 
 #include "vkInit/vk_init.h"
+#include "vkContext/vkRayTracing.h"
 
 #include "vk_context.h"
 #include "editor/vkImgui_context.h"
@@ -22,6 +23,7 @@ namespace yic {
         void initVulkan();
 
         vk_context vkContext{};
+        vkRayTracing mvkRayTracing{};
         std::unique_ptr<ImRender::vkImgui_context> vkImContext;
 
     private:

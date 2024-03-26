@@ -18,12 +18,12 @@ namespace vkPmx {
             vk::IndexType mIndexType{};
             uint32_t mMmdVertUniformBufOffset{};
 
-            genericBufferManagerUptr mIndexBuffer{};
-            genericBufferManagerUptr mVertexBuffer{};
+            allocManager::bufAccelAddressUptr mIndexBuffer{};
+            allocManager::bufAccelAddressUptr mVertexBuffer{};
 
             // uniform buf
             std::vector<uint32_t> mMmdFragUniformBufOffset{};
-            genericBufferManagerUptr mUniformBuffer{};
+            allocManager::bufUptr mUniformBuffer{};
         };
 
     public:
@@ -47,6 +47,9 @@ namespace vkPmx {
         pmx_context& updateAnimation();
         pmx_context& update();
         pmx_context& draw(const vk::CommandBuffer& cmd);
+
+    public:
+        [[nodiscard]] inline auto& getPmxModel() const { return mPmxModel;}
 
     private:
         std::shared_ptr<saba::MMDModel> mMmdModel;
@@ -78,6 +81,7 @@ namespace vkPmx {
         size_t mMaterialCount{0};
     private:
         pmxModelResource mModelResource{};
+        pmxModel mPmxModel{};
         std::vector<vk::CommandBuffer> mCmdBuffers;
 
         std::vector<genericTexManagerSptr> mMmdMaterials;

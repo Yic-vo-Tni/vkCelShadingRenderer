@@ -15,6 +15,7 @@ endif()
 
 set(FETCHCONTENT_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external)
 set(taskflow_src ${FETCHCONTENT_BASE_DIR}/cpp_taskflow-src)
+
 include(FetchContent)
 
 include_directories(
@@ -24,6 +25,7 @@ include_directories(
         saba/src
         saba/example
         external/cpp_taskflow-src
+        nvpro_core
 
         src/vkH
         src/vkM
@@ -39,6 +41,14 @@ find_library(glfw_msvc glfw3 PATHS ${CMAKE_SOURCE_DIR}/lib/msvc)
 find_library(glfw_mingw glfw3 PATHS ${CMAKE_SOURCE_DIR}/lib/mingw)
 find_program(glsl glslc REQUIRED)
 
+#set(BASE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+#include(${BASE_DIRECTORY}/nvpro_core/cmake/setup.cmake)
+#include(${BASE_DIRECTORY}/nvpro_core/cmake/utilities.cmake)
+#
+#_add_package_VulkanSDK()
+#_add_package_ImGUI()
+#_add_nvpro_core_lib()
+
 if (NOT EXISTS "${taskflow_src}")
     FetchContent_Declare(
             cpp_taskflow
@@ -50,10 +60,11 @@ if (NOT EXISTS "${taskflow_src}")
     FetchContent_MakeAvailable(cpp_taskflow)
 endif ()
 
-file(GLOB_RECURSE yic_srcs "src/*.h" "src/*.cpp")
+file(GLOB_RECURSE yic_srcs "src/*.h" "src/*.cpp" "pch/vkGlobal.cpp")
 file(GLOB_RECURSE vertex ${CMAKE_SOURCE_DIR}/src/shaders/*.vert)
 file(GLOB_RECURSE fragment ${CMAKE_SOURCE_DIR}/src/shaders/*.frag)
-file(GLOB_RECURSE pch_files "pch/*.h" "pch/*.cpp")
+file(GLOB_RECURSE ray ${CMAKE_SOURCE_DIR}/src/shaders/*.glsl)
+file(GLOB_RECURSE pch_files "pch/*.h" )
 
 foreach (vert_shader ${vertex})
     get_filename_component(shader_name ${vert_shader} NAME_WE)
@@ -63,6 +74,11 @@ endforeach ()
 foreach (frag_shader ${fragment})
     get_filename_component(shader_name ${frag_shader} NAME_WE)
     execute_process(COMMAND ${glsl} ${frag_shader} -o ${CMAKE_CURRENT_BINARY_DIR}/${shader_name}.spv)
+endforeach ()
+
+foreach (ray_shader ${ray})
+    get_filename_component(shader_name ${ray_shader} NAME_WE)
+    execute_process(COMMAND ${glsl} ${ray_shader} -o ${CMAKE_CURRENT_BINARY_DIR}/${shader_name}.spv)
 endforeach ()
 
 add_executable(vulkan main.cpp ${yic_srcs})
@@ -76,13 +92,17 @@ if(MSVC)
     target_include_directories(vulkan PRIVATE ${CMAKE_BINARY_DIR})
     target_include_directories(vulkan PRIVATE external/spdlog)
     target_include_directories(vulkan PRIVATE taskflow)
+    target_include_directories(vulkan PRIVATE nvpro_core)
 
     target_link_libraries(vkMMD ${glfw_msvc} "Vulkan::Vulkan" "Saba" "imgui")
 elseif (MINGW)
-    target_link_libraries(vulkan ${glfw_mingw} "Vulkan::Vulkan" "imgui" "Saba" )
+    target_link_libraries(vulkan ${glfw_mingw} "Vulkan::Vulkan" "imgui" "Saba")
+ #   target_link_libraries(vulkan ${glfw_mingw} "Vulkan::Vulkan" "imgui" "Saba" "nvpro_core")
     target_include_directories(vulkan PRIVATE ${CMAKE_BINARY_DIR})
     target_include_directories(vulkan PRIVATE external/spdlog)
     target_include_directories(vulkan PRIVATE taskflow)
+    target_include_directories(vulkan PRIVATE nvpro_core)
+
 
     target_link_libraries(vkMMD ${glfw_mingw} "Vulkan::Vulkan" "Saba" "imgui")
     target_include_directories(vkMMD PRIVATE external/spdlog)
@@ -92,8 +112,15 @@ endif ()
 
 file(INSTALL saba/viewer/Saba/Viewer/resource DESTINATION ${CMAKE_BINARY_DIR})
 
+#if (NOT TARGET imgui)
 add_subdirectory(imgui)
-add_subdirectory(saba)
+#endif ()
+
+
+if (NOT TARGET saba)
+    add_subdirectory(saba)
+endif ()
+
 
 
 

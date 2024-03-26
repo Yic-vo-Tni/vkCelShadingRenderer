@@ -111,6 +111,14 @@ namespace vkPmx {
             : m_position(position), m_normal(normal), m_uv(uv){}
     };
 
+    struct pmxModel{
+        uint32_t indices{};
+        uint32_t vertices{};
+        vk::IndexType indexType{};
+        yic::Buffer mIndexBuffer{};
+        yic::Buffer mVertexBuffer{};
+    };
+
     struct MMDVertxShaderUB
     {
         glm::mat4	m_wv;

@@ -75,9 +75,9 @@ namespace vkPmx {
                                                           {1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, m_normal)},
                                                           {2, 0, vk::Format::eR32G32Sfloat, offsetof(Vertex, m_uv)},
                                                   });
-        vk::PipelineColorBlendAttachmentState state{yic::graphicsPipelineState::makePipelineColorBlendAttachments({}, true,
-                                                                                                                  vk::BlendFactor::eSrcAlpha,vk::BlendFactor::eOneMinusSrcAlpha, vk::BlendOp::eAdd,
-                                                                                                                  vk::BlendFactor::eSrcAlpha, vk::BlendFactor::eOneMinusSrcAlpha,vk::BlendOp::eAdd)};
+//        vk::PipelineColorBlendAttachmentState state{yic::graphicsPipelineState::makePipelineColorBlendAttachments({}, true,
+//                                                                                                                  vk::BlendFactor::eSrcAlpha,vk::BlendFactor::eOneMinusSrcAlpha, vk::BlendOp::eAdd,
+//                                                                                                                  vk::BlendFactor::eSrcAlpha, vk::BlendFactor::eOneMinusSrcAlpha,vk::BlendOp::eAdd)};
         pipelineCombined.updateState();
         pipelineCombined.rasterizationState.setCullMode(vk::CullModeFlagBits::eNone);
         mPipeline = pipelineCombined.createGraphicsPipeline();
@@ -88,12 +88,14 @@ namespace vkPmx {
     pmx_context &pmx_context::createVertexBuffer() {
         /// vertex buffer
         auto vertBufMemSize = uint32_t (sizeof (Vertex)) * mMmdModel->GetVertexCount();
-        mModelResource.mVertexBuffer = std::make_unique<yic::genericBufferManager>(vertBufMemSize, vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst);
-        
+        mModelResource.mVertexBuffer = allocManager::build::bufAccelAddressUptr(vertBufMemSize, vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst |
+                                                                                                                vk::BufferUsageFlagBits::eShaderDeviceAddress | vk::BufferUsageFlagBits::eAccelerationStructureBuildInputReadOnlyKHR);
+
         /// index buffer
         auto indexMemSize = uint32_t (mMmdModel->GetIndexCount() * mMmdModel->GetIndexElementSize());
-        mModelResource.mIndexBuffer = std::make_unique<yic::genericBufferManager>(indexMemSize, vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst);
-        // 
+        mModelResource.mIndexBuffer = allocManager::build::bufAccelAddressUptr(vertBufMemSize, vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst |
+                                                                                                              vk::BufferUsageFlagBits::eShaderDeviceAddress | vk::BufferUsageFlagBits::eAccelerationStructureBuildInputReadOnlyKHR);
+        //
         StagingBuffer* indicesStagingBuffer;
         StagingBuffer::getStagingBuffer(indexMemSize, &indicesStagingBuffer);
         
@@ -111,14 +113,22 @@ namespace vkPmx {
         switch (mMmdModel->GetIndexElementSize()) {
             case 2:
                 mModelResource.mIndexType = vk::IndexType::eUint16;
+                mPmxModel.indexType = vk::IndexType::eUint16;
                 break;
             case 4:
                 mModelResource.mIndexType = vk::IndexType::eUint32;
+                mPmxModel.indexType = vk::IndexType::eUint32;
                 break;
             default:
                 vkError("unknown index size {0}", mMmdModel->GetIndexElementSize());
                 break;
         }
+
+        mPmxModel.mVertexBuffer.buffer = mModelResource.mVertexBuffer->getBuffer();
+        mPmxModel.mIndexBuffer.buffer = mModelResource.mIndexBuffer->getBuffer();
+        mPmxModel.indices = mMmdModel->GetIndexCount();
+        mPmxModel.vertices = mMmdModel->GetVertexCount();
+
 
         return *this;
     }

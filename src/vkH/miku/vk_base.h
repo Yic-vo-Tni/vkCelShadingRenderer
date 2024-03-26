@@ -85,6 +85,17 @@ namespace yic {
         bool mVsync{false};
 
         vkDescriptor mDesc{};
+
+
+        ///////////////////
+
+    public:
+        vk_base& createOffscreenRenderPass();
+        vk_base& createOffscreenFrameBuffers();
+    protected:
+        vk::RenderPass mOffscreenRenderPass{};
+        std::vector<vk::Framebuffer> mOffscreenFrameBuffers{};
+
     private:
         void onFrameBufferSize(int w, int h);
     };
@@ -92,3 +103,36 @@ namespace yic {
 } // yic
 
 #endif //VULKAN_VK_BASE_H
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

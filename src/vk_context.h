@@ -40,6 +40,8 @@ namespace yic {
             return cmdBuffers;
         }
 
+        [[nodiscard]] inline auto& getPmxModel() const { return mPmxModel;}
+
     private: // pmx
         vk_context& prePmxContext();
         // skybox
@@ -51,6 +53,8 @@ namespace yic {
 
     private: /// transfer buf
         vk::CommandPool mTransferPool{};
+
+        vkPmx::pmxModel mPmxModel;
     };
 
 } // yic

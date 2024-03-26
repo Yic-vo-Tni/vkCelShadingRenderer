@@ -62,9 +62,9 @@ namespace yic{
 
     private:
         template<class featureType>
-        void addFeatureToChain(featureType& feature){
+        void addFeatureToChain(featureType* feature){
             feature->pNext = features2.pNext;
-            features2.pNext = &feature;
+            features2.pNext = feature;
         }
         //////// instance
 

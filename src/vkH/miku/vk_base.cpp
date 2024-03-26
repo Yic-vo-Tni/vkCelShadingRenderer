@@ -48,6 +48,8 @@ namespace yic {
         return *this;
     }
 
+
+
     vk_base &vk_base::createDepthBuffer() {
         if (mDepthView)
             mDevice.destroy(mDepthView);
@@ -80,6 +82,45 @@ namespace yic {
         submitTempCmdBuf(cmd);
 
         mDepthView = vk_fn::createImageView(mDevice, mDepthImage, mDepthFormat, vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil);
+
+        return *this;
+    }
+
+    vk_base &vk_base::createOffscreenRenderPass() {
+        std::vector<vk::AttachmentDescription> attachmentDes{
+                { {},
+                  mColorFormat, vk::SampleCountFlagBits::e1,
+                  vk::AttachmentLoadOp::eClear,
+                  vk::AttachmentStoreOp::eStore,
+                  vk::AttachmentLoadOp::eDontCare,
+                  vk::AttachmentStoreOp::eDontCare,
+                  vk::ImageLayout::eColorAttachmentOptimal,
+                  vk::ImageLayout::eColorAttachmentOptimal
+                 }
+        };
+
+        std::vector<vk::AttachmentReference> attachRef{{0, vk::ImageLayout::eColorAttachmentOptimal}};
+        vk::SubpassDescription subpass{{}, vk::PipelineBindPoint::eGraphics, {}, attachRef, {}, {}};
+
+        vk::RenderPassCreateInfo createInfo{{}, attachmentDes, subpass, {}};
+        vkCreate([&](){ mOffscreenRenderPass = mDevice.createRenderPass(createInfo);}, " create off-screen render pass");
+
+        return *this;
+    }
+
+    vk_base &vk_base::createOffscreenFrameBuffers() {
+        for(auto& offFramebuffer : mOffscreenFrameBuffers){
+            mDevice.destroy(offFramebuffer);
+        }
+
+        std::array<vk::ImageView, 1> attachments{};
+        vk::FramebufferCreateInfo createInfo{{}, mOffscreenRenderPass, attachments, mExtent.width, mExtent.height, 1};
+
+        mFrameBuffers.resize(mSwapchain.getImageCount());
+        for(uint32_t i = 0; i < mSwapchain.getImageCount(); i++){
+            attachments[0] = mSwapchain.getImageView(i);
+            vkCreate([&](){ mFrameBuffers[i] = mDevice.createFramebuffer(createInfo);}, " create off-screen framebuffer " + std::to_string(i), 0);
+        }
 
         return *this;
     }
