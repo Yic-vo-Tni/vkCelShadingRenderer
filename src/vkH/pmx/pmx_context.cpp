@@ -39,13 +39,15 @@ namespace vkPmx {
 
     pmx_context &pmx_context::updateEveryFrame(const glm::mat4& view, const glm::mat4& proj){
         double time = saba::GetTime();
-        double elapsed = time - mSaveTime;
-        if (elapsed > 1.f / 30.f){
-            elapsed = 1.f / 30.f;
+        if (modelTransformManager::get()->playAnimVMD()){
+            double elapsed = time - mSaveTime;
+            if (elapsed > 1.f / 30.f) {
+                elapsed = 1.f / 30.f;
+            }
+            mSaveTime = time;
+            mElapsed = float(elapsed);
+            mAnimTime += float(elapsed);
         }
-        mSaveTime = time;
-        mElapsed = float (elapsed);
-        mAnimTime += float (elapsed);
 
         mView = view;
         mProj = proj;
@@ -205,9 +207,11 @@ namespace vkPmx {
     }
 
     pmx_context &pmx_context::updateAnimation() {
-        mMmdModel->BeginAnimation();
-        mMmdModel->UpdateAllAnimation(mVmdAnimation.get(), mAnimTime * 30.f, mElapsed);
-        mMmdModel->EndAnimation();
+        if (modelTransformManager::get()->playAnimVMD()){
+            mMmdModel->BeginAnimation();
+            mMmdModel->UpdateAllAnimation(mVmdAnimation.get(), mAnimTime * 30.f, mElapsed);
+            mMmdModel->EndAnimation();
+        }
 
         return *this;
     }
@@ -231,6 +235,13 @@ namespace vkPmx {
         auto vertex = static_cast<Vertex*>(vertStagingBufMem);
         for(size_t i = 0; i < vertexCount; i++){
             vertex[i] = Vertex(position[i], normal[i], uv[i]);
+
+            min.x = std::min(position[i].x, min.x);
+            min.y = std::min(position[i].y, min.y);
+            min.z = std::min(position[i].z, min.z);
+            max.x = std::max(position[i].x, max.x);
+            max.y = std::max(position[i].y, max.y);
+            max.z = std::max(position[i].z, max.z);
         }
         mDevice.unmapMemory(vertBuf->m_memory);
         vertBuf->CopyBuffer(mModelResource.mVertexBuffer->getBuffer(), memSize);
@@ -245,8 +256,8 @@ namespace vkPmx {
         }
         // model unif
         auto mmdVertUnifBuf = reinterpret_cast<MMDVertxShaderUB*>(uniformBufPtr + mModelResource.mMmdVertUniformBufOffset);
-        mmdVertUnifBuf->m_wv = mView;
-        mmdVertUnifBuf->m_wvp = mProj * mView;
+        mmdVertUnifBuf->m_wv = mView * modelTransformManager::get()->getModelMatrix();
+        mmdVertUnifBuf->m_wvp = mProj * mView * modelTransformManager::get()->getModelMatrix();
         // material unif
         for(size_t i = 0; i < mMaterialCount; i++){
             const auto& mmdMaterial = mMmdModel->GetMaterials()[i];

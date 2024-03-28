@@ -5,6 +5,9 @@
 #ifndef VULKAN_VKIMGUI_H
 #define VULKAN_VKIMGUI_H
 
+#include "modelTransformManager.h"
+#include "nfd.h"
+
 namespace yic {
 
     struct imguiContext{
@@ -35,7 +38,11 @@ namespace yic {
         bool mShowDemo{true};
         vk::Extent2D mExtent;
         imguiContext& mImguiContext;
+
+        glm::vec3 translation{1.f, 0.f, 0.f};
     };
+
+
 
 } // yic
 

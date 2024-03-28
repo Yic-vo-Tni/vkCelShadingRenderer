@@ -25,17 +25,22 @@ namespace yic {
 
     vk_context &vk_context::prepareEveryContext() {
         this            ->preSkyContext();
-        this            ->prePmxContext();
-
-        mPmxModel = mPmxContext->getPmxModel();
 
         return *this;
     }
 
     vk_context &vk_context::updateEveryFrame() {
         this            ->prepareFrame();
-        mPmxContext     ->updateEveryFrame(vkCamera::get()->getViewMatrix(), vkCamera::get()->getProjMatrix(mExtent));
         mSkyboxContext  ->updateEveryFrame();
+
+        if (modelTransformManager::get()->isLoadPmxModel()){
+            mPmxThread = std::thread([&](){this->prePmxContext();});
+            mPmxThread.detach();
+            modelTransformManager::get()->setLoadPmxModel();
+        }
+        if (modelTransformManager::get()->isRenderPmxModel()){
+            mPmxContext     ->updateEveryFrame(vkCamera::get()->getViewMatrix(), vkCamera::get()->getProjMatrix(mExtent));
+        }
 
         return *this;
     }
@@ -47,11 +52,13 @@ namespace yic {
     }
 
     vk_context &vk_context::rasterization(const vk::CommandBuffer &cmd) {
-        this            ->setViewport(cmd);
+        if (modelTransformManager::get()->isRenderPmxModel()) {
+            this->setViewport(cmd);
 
-        mPmxContext     ->updateAnimation();
-        mPmxContext     ->update();
-        mPmxContext     ->draw(cmd);
+            mPmxContext->updateAnimation();
+            mPmxContext->update();
+            mPmxContext->draw(cmd);
+        }
 
         return *this;
     }
@@ -64,8 +71,16 @@ namespace yic {
 
 
     vk_context &vk_context::prePmxContext() {
-        std::vector<vkPmx::Input> inputModels{{R"(E:\Material\model\Nilou\Nilou.pmx)", {R"(E:\Material\vmd\mmd\8.vmd)"}}};
-        mPmxContext = std::make_unique<vkPmx::pmx_context>(inputModels, vk_init::get(), mSwapchain.getImageCount(), mRenderPass, mCommandPool);
+        mBackupContext = std::make_unique<vkPmx::pmx_context>(modelTransformManager::get()->getInputModels(), vk_init::get(), mSwapchain.getImageCount(), mRenderPass, mCommandPool);
+        tasker::wQueueFactory::get()->execute(vkTaskGroupType::eResourceLoadGroup);
+        mPmxContext.swap(mBackupContext);
+        if (!modelTransformManager::get()->getInputModels()[0].m_vmdPaths.empty()){
+            modelTransformManager::get()->setLoadVMDAnim();
+        }
+        mBackupContext.reset();
+        if (!modelTransformManager::get()->isRenderPmxModel()){
+            modelTransformManager::get()->setRenderPmxModel();
+        }
 
         return *this;
     }

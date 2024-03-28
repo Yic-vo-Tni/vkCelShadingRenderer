@@ -6,6 +6,7 @@
 #define VKMMD_PMX_CONTEXT_H
 
 #include "pmx/pmx_header.h"
+#include "editor/modelTransformManager.h"
 
 namespace vkPmx {
 
@@ -85,6 +86,8 @@ namespace vkPmx {
         std::vector<vk::CommandBuffer> mCmdBuffers;
 
         std::vector<genericTexManagerSptr> mMmdMaterials;
+
+        glm::vec3 min{FLT_MAX}, max{-FLT_MAX};
     };
 
 } // vkPmx

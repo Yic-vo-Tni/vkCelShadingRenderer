@@ -48,13 +48,14 @@ namespace yic {
         vk_context& preSkyContext();
 
     private:
-        std::unique_ptr<vkPmx::pmx_context> mPmxContext{};
+        std::unique_ptr<vkPmx::pmx_context> mPmxContext{}, mBackupContext;
         std::unique_ptr<vkSkybox> mSkyboxContext{};
 
     private: /// transfer buf
         vk::CommandPool mTransferPool{};
 
         vkPmx::pmxModel mPmxModel;
+        std::thread mPmxThread;
     };
 
 } // yic

@@ -18,9 +18,8 @@ namespace yic {
     }
 
     vkRayTracing &vkRayTracing::initRayTracing(vkPmx::pmxModel pmxModel) {
-        vk::PhysicalDeviceProperties2 properties2;
-        vk::PhysicalDeviceRayTracingPipelinePropertiesKHR rtProperties;
-        properties2.pNext = &rtProperties;
+        vk::PhysicalDeviceProperties2 properties2{};
+        properties2.pNext = &mRtProperties;
         mPhysicalDevice.getProperties2(&properties2);
 
         mRtBuilder.init(mDevice, mGraphicsQueue, mCommandPool);
@@ -63,15 +62,79 @@ namespace yic {
     }
 
     vkRayTracing &vkRayTracing::createRtPipeline() {
-        enum stageIndices{
-            eRagGen, eMiss, eMiss2, eClosestHit, eShaderGroupCount
-        };
+        enum stageIndices{ eRagGen, eMiss, eMiss2, eClosestHit, eShaderGroupCount };
 
+        auto createShaderStageInfo = [&](vk::ShaderStageFlagBits flags, const std::string& path){
+            return vk::PipelineShaderStageCreateInfo{{}, flags, vkHelp::createShaderModule(mDevice, ke_q::loadFile(path)), "main"};};
         std::array<vk::PipelineShaderStageCreateInfo, eShaderGroupCount> stages{};
-        stages[eRagGen] = vk::PipelineShaderStageCreateInfo{{}, vk::ShaderStageFlagBits::eRaygenKHR, vkHelp::createShaderModule(mDevice, ke_q::loadFile("")), "main"};
-        stages[eMiss] = vk::PipelineShaderStageCreateInfo{{}, vk::ShaderStageFlagBits::eMissKHR, vkHelp::createShaderModule(mDevice, ke_q::loadFile("")), "main"};
-        stages[eMiss2] = vk::PipelineShaderStageCreateInfo{{}, vk::ShaderStageFlagBits::eMissKHR, vkHelp::createShaderModule(mDevice, ke_q::loadFile("")), "main"};
-        stages[eClosestHit] = vk::PipelineShaderStageCreateInfo{{}, vk::ShaderStageFlagBits::eClosestHitKHR, vkHelp::createShaderModule(mDevice, ke_q::loadFile("")), "main"};
+        stages[eRagGen] = createShaderStageInfo(vk::ShaderStageFlagBits::eRaygenKHR, "gen_ray");
+        stages[eMiss] = createShaderStageInfo(vk::ShaderStageFlagBits::eMissKHR, "miss_ray");
+        stages[eMiss2] = createShaderStageInfo(vk::ShaderStageFlagBits::eMissKHR, "shadowMiss_ray");
+        stages[eClosestHit] = createShaderStageInfo(vk::ShaderStageFlagBits::eClosestHitKHR, "hit_ray");
+
+        using info = vk::RayTracingShaderGroupCreateInfoKHR();
+        auto shaderGroup = [&](stageIndices indices){ return vk::RayTracingShaderGroupCreateInfoKHR().setGeneralShader(indices); };
+        mRtShaderGroups.emplace_back(shaderGroup(eRagGen));
+        mRtShaderGroups.emplace_back(shaderGroup(eMiss));
+        mRtShaderGroups.emplace_back(shaderGroup(eMiss2));
+        mRtShaderGroups.emplace_back(shaderGroup(eClosestHit));
+
+        using b = vk::ShaderStageFlagBits;
+        vk::PushConstantRange pushConstant{b::eRaygenKHR | b::eClosestHitKHR | b::eMissKHR, 0, sizeof (PushConstantRay)};
+        mRtPipelineLayout = mDevice.createPipelineLayout(vk::PipelineLayoutCreateInfo().setPushConstantRanges(pushConstant));
+
+        vkCreate([&](){ mRtPipeline = mDevice.createRayTracingPipelineKHR({}, {}, vk::RayTracingPipelineCreateInfoKHR().setStages(stages)
+                                                                                                                            .setGroups(mRtShaderGroups)
+                                                                                                                            .setLayout(mRtPipelineLayout)
+                                                                                                                            .setMaxPipelineRayRecursionDepth(2),
+                                                                          nullptr, gl::dispatchLoaderDynamic_).value;}, "create Rt pipeline");
+        for(auto& stage : stages){ mDevice.destroy(stage.module); }
+
+        return *this;
+    }
+
+    vkRayTracing &vkRayTracing::createRtSBT() {
+        uint32_t missCount{2}, hitCount{1};
+        auto handleCount = hitCount + missCount + 1;
+        uint32_t handleSize = mRtProperties.shaderGroupHandleAlignment;
+
+        uint32_t handleSizeAligned = vkH::align_up(handleSizeAligned, mRtProperties.shaderGroupHandleAlignment);
+
+        mRgenRegion.setStride(vkH::align_up(handleSizeAligned, mRtProperties.shaderGroupBaseAlignment)).setSize(mRgenRegion.stride);
+        mMissRegion.setStride(handleSizeAligned).setSize( vkH::align_up(missCount * handleSizeAligned, mRtProperties.shaderGroupBaseAlignment));
+        mHitRegion.setStride(handleSizeAligned).setSize(vkH::align_up(hitCount * handleSizeAligned, mRtProperties.shaderGroupBaseAlignment));
+
+        auto handles = mDevice.getRayTracingShaderGroupHandleKHR<std::vector<uint8_t>>(mRtPipeline, 0, handleCount, gl::dispatchLoaderDynamic_);
+
+        auto sbtSize = mRgenRegion.size + mMissRegion.size + mHitRegion.size + mCallRedion.size;
+        using bufUsage = vk::BufferUsageFlagBits;
+        mRtSBTBuffer = allocManager::build::bufAccelAddressUptr(sbtSize, bufUsage::eTransferSrc | bufUsage::eShaderDeviceAddress | bufUsage::eShaderBindingTableKHR);
+
+        vk::BufferDeviceAddressInfo info{mRtSBTBuffer->getBuffer()};
+        auto sbtAddr = mDevice.getBufferAddress(info, gl::dispatchLoaderDynamic_);
+        mRgenRegion.deviceAddress = sbtAddr;
+        mMissRegion.deviceAddress = sbtAddr + mRgenRegion.size;
+        mHitRegion.deviceAddress = sbtAddr + mRgenRegion.size + mMissRegion.size;
+
+        auto getHandle = [&](int i) { return handles.data() + i * handleSize; };
+
+        uint32_t handleIdx{0};
+        uint32_t offset{0};
+        mRtSBTBuffer->updateBuffer(getHandle(handleIdx++), handleSize, offset);
+
+        offset = mRgenRegion.size;
+        for(uint32_t c = 0; c < missCount; c++){
+            mRtSBTBuffer->updateBuffer(getHandle(handleIdx++), handleSize, offset);
+            offset += mMissRegion.stride;
+        }
+
+        offset = mRgenRegion.size + mMissRegion.size;
+        for(uint32_t c = 0; c < hitCount; c++){
+            mRtSBTBuffer->updateBuffer(getHandle(handleIdx++), handleSize, offset);
+            offset += mHitRegion.stride;
+        }
+
+        mRtSBTBuffer->unmap();
 
         return *this;
     }

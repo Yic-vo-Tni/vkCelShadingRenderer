@@ -49,15 +49,13 @@ namespace yic {
         /// imgui
         vkImContext = std::make_unique<ImRender::vkImgui_context>(vk_init::get(), vkContext.getSwapchain());
 
-        tasker::wQueueFactory::get()->execute(vkTaskGroupType::eResourceLoadGroup);
-
         taskerBuilder::executor::executeTaskflow();
 
-        mvkRayTracing.init(vk_init::get())
-                    .initRayTracing(vkContext.getPmxModel())
-                    .createBottomLevelAS()
-                    .createTopLevelAS();
-                    ;
+//        mvkRayTracing.init(vk_init::get())
+//                    .initRayTracing(vkContext.getPmxModel())
+//                    .createBottomLevelAS()
+//                    .createTopLevelAS();
+//                    ;
     }
 
     void RHI::drawFrame() {

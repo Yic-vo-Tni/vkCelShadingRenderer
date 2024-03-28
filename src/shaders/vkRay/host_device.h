@@ -1,13 +1,13 @@
 //
-// Created by lenovo on 3/25/2024.
+// Created by lenovo on 3/28/2024.
 //
 
 #ifndef VKMMD_HOST_DEVICE_H
 #define VKMMD_HOST_DEVICE_H
 
 #ifdef __cplusplus
-#include "glm/glm.hpp"
-
+#include <glm/glm.hpp>
+// GLSL Type
 using vec2 = glm::vec2;
 using vec3 = glm::vec3;
 using vec4 = glm::vec4;
@@ -73,6 +73,7 @@ struct WaveFrontMaterial  // See ObjLoader, copy of MaterialObj, could be compre
     int   illum;     // illumination model (see http://www.fileformat.info/format/material/)
     int   textureId;
 };
+
 
 
 #endif //VKMMD_HOST_DEVICE_H

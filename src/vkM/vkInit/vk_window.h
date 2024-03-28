@@ -50,6 +50,7 @@ namespace yic {
         static void defaultScrollCallback(GLFWwindow* window, double xOffset, double yOffset);
 
         static void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods);
+        static void keyCallback(GLFWwindow* window, int key, int scancode,int action, int mode);
     };
 
 } // yic

@@ -41,6 +41,13 @@ namespace yic {
 
         template<typename T>
         vkAllocator& updateBuffer(const T& src) { memcpy(mData, &src, sizeof(src)); return *this;}
+        template<typename T>
+        vkAllocator& updateBuffer(const T& src, size_t size) { memcpy(mData, &src, size); return *this;}
+        template<typename T>
+        vkAllocator& updateBuffer(const T* src, size_t size, size_t offset){
+            memcpy(static_cast<uint8_t*>(mData) + offset, src, size);
+            return *this;
+        }
         vkAllocator& unmap();
 
         void allocMem(const MemReqs& memReqs, const BindMem& bindMem,

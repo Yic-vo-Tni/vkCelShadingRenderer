@@ -26,7 +26,19 @@ void main(){
     float tMin = 0.001;
     float tMax = 10000.0;
 
-    traceRayExt(tlas, rayFlags, 0xFF, 0, 0, 0, origin.xyz, tMax, 0);
+  traceRayEXT(tlas,     // acceleration structure
+              rayFlags,       // rayFlags
+              0xFF,           // cullMask
+              0,              // sbtRecordOffset
+              0,              // sbtRecordStride
+              0,              // missIndex
+              origin.xyz,     // ray origin
+              tMin,           // ray min range
+              direction.xyz,  // ray direction
+              tMax,           // ray max range
+              0               // payload (location = 0)
+  );
+
 
     imageStore(image, ivec2(gl_LaunchIDEXT.xy), vec4(prd.hitValue, 1.f));
 

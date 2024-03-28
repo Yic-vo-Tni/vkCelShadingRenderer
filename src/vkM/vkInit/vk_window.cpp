@@ -51,6 +51,8 @@ namespace yic {
             glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
             glfwSetCursorPosCallback(window_, mouseCallback);
             glfwSetScrollCallback(window_, scrollCallback);
+
+            glfwSetKeyCallback(window_, keyCallback);
         }
         if (glfwGetMouseButton(window_, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE){
             glfwGetCursorPos(window_, &xLast, &yLast);
@@ -60,6 +62,8 @@ namespace yic {
             glfwSetMouseButtonCallback(window_, mouseButtonCallback);
             firstClick = true;
             vkCamera::get()->firstMouse = true;
+
+            glfwSetKeyCallback(window_, keyCallback);
         }
     }
 
@@ -73,6 +77,16 @@ namespace yic {
 
     void Window::scrollCallback(GLFWwindow *window, double xOffset, double yOffset) {
         vkCamera::get()->scrollCallback(xOffset, yOffset);
+    }
+
+    void Window::keyCallback(GLFWwindow *window, int key, int scancode, int action, int mode) {
+        ImGuiIO& io = ImGui::GetIO();
+        if (action == GLFW_PRESS)
+            io.KeysDown[key] = true;
+        if (action == GLFW_RELEASE)
+            io.KeysDown[key] = false;
+
+        ImGui_ImplGlfw_KeyCallback(window, key, scancode, action, mode);
     }
 
     void Window::defaultMouseCallback(GLFWwindow *window, double xPos, double yPos) {}

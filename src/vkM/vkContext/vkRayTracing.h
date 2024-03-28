@@ -12,6 +12,8 @@
 #include "ke_q/file_operation.h"
 #include "vkInit/vk_init.h"
 #include "vkCore/vkShader.h"
+#include "vkCore/alignment.h"
+#include "vkRay/host_device.h"
 
 namespace yic {
 
@@ -23,6 +25,7 @@ namespace yic {
         vkRayTracing& createBottomLevelAS();
         vkRayTracing& createTopLevelAS();
         vkRayTracing& createRtPipeline();
+        vkRayTracing& createRtSBT();
 
     public:
         rt::rayTracingKHR::vkBlasInput pmxToVkGeometryKHR(const vkPmx::pmxModel& pmx);
@@ -39,6 +42,14 @@ namespace yic {
 
         std::vector<vkPmx::pmxModel> mPmxModels;
         std::vector<vkScene::objInstance> mObjInstances;
+
+        vk::PhysicalDeviceRayTracingPipelinePropertiesKHR mRtProperties;
+        vk::Pipeline mRtPipeline;
+        vk::PipelineLayout mRtPipelineLayout;
+        std::vector<vk::RayTracingShaderGroupCreateInfoKHR> mRtShaderGroups;
+
+        allocManager::bufAccelAddressUptr mRtSBTBuffer;
+        vk::StridedDeviceAddressRegionKHR mRgenRegion{}, mMissRegion{}, mHitRegion{}, mCallRedion{};
     };
 
 } // rt
