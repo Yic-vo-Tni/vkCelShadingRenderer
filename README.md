@@ -8,38 +8,40 @@
 - **自由摄像机**：支持鼠标右键进入通过WASD键移动。
 - **模拟终端**：输出调试信息等。
 
-### 整体界面
-<p align="center">
-  <img src="ReadMeImage/img_1.png" width="900" height="600" alt="">
-  <br>
-</p>
+## 如何构建
+- 需要CMake和MinGW
+- 需要手动编译Assimp库
+- Bullet库参考Saba库下面的配置和编译
+- 其他库会通过CMake的FetchContext模块自动下载配置
+- 然后应该就可以直接在CLion里面运行了吧 = - =
 
-### 模型渲染
-<p align="center">
+## 效果图
+<div style="text-align: center">
   <img src="ReadMeImage/img_2.png" width="900" height="600" alt="">
   <br>
-</p>
+  <em>模型渲染</em>
+</div>
 
-### 材质更改
-<p align="center">
+<div style="text-align: center">
   <img src="ReadMeImage/img_3.png" width="900" height="600" alt="">
   <br>
-</p>
+<em>材质更改</em>
+</div>
 
-### 渲染效果设置更改
-<p align="center">
+<div style="text-align: center">
   <img src="ReadMeImage/img_4.png" width="900" height="600" alt="">
   <br>
-</p>
+<em>渲染效果设置更改</em>
+</div>
 
-### 模型编辑
-<p align="center">
+<div style="text-align: center">
   <img src="ReadMeImage/img_5.png" width="900" height="600" alt="">
   <br>
-</p>
+<em>模型编辑</em>
+</div>
 
-### vmd播放
-<p align="center">
+<div style="text-align: center">
   <img src="ReadMeImage/img_6.png" width="900" height="600" alt="">
   <br>
-</p>
+<em>vmd播放</em>
+</div>
