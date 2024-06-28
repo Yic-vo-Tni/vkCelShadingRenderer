@@ -371,6 +371,7 @@ namespace vkPmx {
                         mMmdModel->EndAnimation();
                     ImGui::SameLine();
                     ImGui::Text("current frame", 0, 100);
+                    //
                 }
 
 
