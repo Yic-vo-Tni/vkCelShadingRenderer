@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "F:/Yicvot/Yicvot/external/vkpro_core-subbuild/CMakeFiles/vkpro_core-populate"
+		},
+		{
+			"file" : "F:/Yicvot/Yicvot/external/vkpro_core-subbuild/CMakeFiles/vkpro_core-populate.rule"
+		},
+		{
+			"file" : "F:/Yicvot/Yicvot/external/vkpro_core-subbuild/CMakeFiles/vkpro_core-populate-complete.rule"
+		},
+		{
+			"file" : "F:/Yicvot/Yicvot/external/vkpro_core-subbuild/vkpro_core-populate-prefix/src/vkpro_core-populate-stamp/vkpro_core-populate-build.rule"
+		},
+		{
+			"file" : "F:/Yicvot/Yicvot/external/vkpro_core-subbuild/vkpro_core-populate-prefix/src/vkpro_core-populate-stamp/vkpro_core-populate-configure.rule"
+		},
+		{
+			"file" : "F:/Yicvot/Yicvot/external/vkpro_core-subbuild/vkpro_core-populate-prefix/src/vkpro_core-populate-stamp/vkpro_core-populate-download.rule"
+		},
+		{
+			"file" : "F:/Yicvot/Yicvot/external/vkpro_core-subbuild/vkpro_core-populate-prefix/src/vkpro_core-populate-stamp/vkpro_core-populate-install.rule"
+		},
+		{
+			"file" : "F:/Yicvot/Yicvot/external/vkpro_core-subbuild/vkpro_core-populate-prefix/src/vkpro_core-populate-stamp/vkpro_core-populate-mkdir.rule"
+		},
+		{
+			"file" : "F:/Yicvot/Yicvot/external/vkpro_core-subbuild/vkpro_core-populate-prefix/src/vkpro_core-populate-stamp/vkpro_core-populate-patch.rule"
+		},
+		{
+			"file" : "F:/Yicvot/Yicvot/external/vkpro_core-subbuild/vkpro_core-populate-prefix/src/vkpro_core-populate-stamp/vkpro_core-populate-test.rule"
+		},
+		{
+			"file" : "F:/Yicvot/Yicvot/external/vkpro_core-subbuild/vkpro_core-populate-prefix/src/vkpro_core-populate-stamp/vkpro_core-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"vkpro_core-populate"
+		],
+		"name" : "vkpro_core-populate"
+	}
+}

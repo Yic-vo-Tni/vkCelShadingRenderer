@@ -24,6 +24,8 @@
 
 #include "vkInit/vk_init.h"
 
+#include "model/load.h"
+
 namespace vkPmx {
 
     struct Input
@@ -101,15 +103,15 @@ namespace vkPmx {
         }
     }
 
-    struct Vertex
-    {
-        glm::vec3	m_position;
-        glm::vec3	m_normal;
-        glm::vec2	m_uv;
-
-        Vertex(const glm::vec3& position, const glm::vec3& normal, const glm::vec2& uv)
-            : m_position(position), m_normal(normal), m_uv(uv){}
-    };
+//    struct Vertex
+//    {
+//        glm::vec3	m_position;
+//        glm::vec3	m_normal;
+//        glm::vec2	m_uv;
+//
+////        Vertex(const glm::vec3& position, const glm::vec3& normal, const glm::vec2& uv)
+////            : m_position(position), m_normal(normal), m_uv(uv){}
+//    };
 
     struct pmxModel{
         uint32_t indices{};
@@ -130,18 +132,63 @@ namespace vkPmx {
         glm::vec3	m_diffuse;
         float		m_alpha;
         glm::vec3	m_ambient;
-        float		m_dummy1;
+//        float		m_dummy1;
+        float       aoStrength;
         glm::vec3	m_specular;
         float		m_specularPower;
         glm::vec3	m_lightColor;
         float		m_dummy2;
         glm::vec3	m_lightDir;
         float		m_dummy3;
-
-        glm::vec4	m_texMulFactor;
+      //  glm::vec4	m_texMulFactor;
         glm::vec4	m_texAddFactor;
-
+        glm::vec4   gaussianBlur;
         glm::ivec4	m_textureModes;
+
+
+//        float radius = 25.f;
+//        float fuzzyCoefficient = 0.2f;
+//        float saturationFactor = 2.3f;
+    };
+
+    struct MMDFragEffect{
+        float aoStrength;
+        float blurRadius;
+        float blurStrength;
+        float saturationFactor;
+        float hueAngle;
+        float brightness;
+
+        float darkPartStrength;
+        int stepOrSmoothStep;
+        int nums;
+        float base;
+        float baseUpper;
+        float range;
+        float stepSize;
+        float r;
+        float g;
+        float b;
+        float a;
+
+        float maxSpecular;
+        float specularColorStrength;
+        float roughnessCoefficient;
+        float specularPow;
+
+//        bool smoothStep;
+//        bool ramp;
+        //float LightDarkTransition;
+    };
+
+    struct MMDGroundShadowVertexShaderUB
+    {
+        glm::mat4	m_wvp;
+    };
+
+    struct MMDGroundShadowFragmentShaderUB
+    {
+        glm::vec4	m_shadowColor;
     };
 
     struct StagingBuffer
@@ -160,16 +207,12 @@ namespace vkPmx {
         vk::Semaphore		m_waitSemaphore;
 
         static bool init(yic::vk_init* vkInit, const vk::CommandPool& transferPool);
+        static void clear() { mStagingBuffers.clear(); };
         bool Setup(vk::DeviceSize size);
         void Clear();
         void Wait();
         bool CopyBuffer(vk::Buffer destBuffer, vk::DeviceSize size);
-        bool CopyImage(
-                vk::Image destImage,
-                vk::ImageLayout imageLayout,
-                uint32_t regionCount,
-                vk::BufferImageCopy* regions
-        );
+
         static bool getStagingBuffer(vk::DeviceSize memSize, StagingBuffer** outBuf);
 
         static vk::Device mDevice;

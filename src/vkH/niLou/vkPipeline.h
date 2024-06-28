@@ -34,6 +34,10 @@ namespace yic {
             attributeDescriptions.insert(attributeDescriptions.end(), attributeDescription.begin(), attributeDescription.end());
             return *this;
         }
+        graphicsPipelineState& addDyState(const std::vector<vk::DynamicState>& state){
+            dynamicStates.insert(dynamicStates.end(), state.begin(), state.end());
+            return *this;
+        }
     public:
         vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState;
         vk::PipelineVertexInputStateCreateInfo vertexInputState;
@@ -44,7 +48,7 @@ namespace yic {
         vk::PipelineDepthStencilStateCreateInfo depthStencilState;
         vk::PipelineColorBlendStateCreateInfo colorBlendState;
 
-        std::vector<vk::PipelineColorBlendAttachmentState> blendAttachmentStates{makePipelineColorBlendAttachments()};
+        std::vector<vk::PipelineColorBlendAttachmentState> blendAttachmentStates{};
     private:
         std::vector<vk::DynamicState> dynamicStates{vk::DynamicState::eViewport, vk::DynamicState::eScissor};
 

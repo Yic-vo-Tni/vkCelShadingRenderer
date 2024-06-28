@@ -15,7 +15,9 @@ endif()
 
 set(FETCHCONTENT_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external)
 set(taskflow_src ${FETCHCONTENT_BASE_DIR}/cpp_taskflow-src)
-#set(json_src ${FETCHCONTENT_BASE_DIR}/json-src)
+set(json_src ${FETCHCONTENT_BASE_DIR}/json-src)
+set(winpty_src ${FETCHCONTENT_BASE_DIR}/winpty-src)
+set(assimp_src ${FETCHCONTENT_BASE_DIR}/assimp-src)
 
 include(FetchContent)
 
@@ -29,20 +31,27 @@ include_directories(
         nvpro_core
         nativefiledialog/src/include
         nativefiledialog/src
+        external/json-src/include
 
         src/shaders/
         src/vkH
         src/vkM
 )
 
+
 set(texPath "${CMAKE_SOURCE_DIR}/src/pictures/")
 set(shaderPath "${CMAKE_SOURCE_DIR}/src/shaders/")
 set(imguiPath "${CMAKE_SOURCE_DIR}/src/vkH/editor/")
 configure_file("${CMAKE_SOURCE_DIR}/pch/config.h.in" "${CMAKE_SOURCE_DIR}/pch/config.h")
 
+#if (MSVC)
+#    link_directories(${SABA_BULLET_ROOT})
+#endif ()
 find_package(Vulkan REQUIRED)
 find_library(glfw_msvc glfw3 PATHS ${CMAKE_SOURCE_DIR}/lib/msvc)
 find_library(glfw_mingw glfw3 PATHS ${CMAKE_SOURCE_DIR}/lib/mingw)
+find_library(winpty_lib winpty PATHS ${CMAKE_SOURCE_DIR}/lib/winpty)
+find_library(assimp_lib assimp PATHS ${CMAKE_SOURCE_DIR}/external/assimp-build/lib)
 find_program(glsl glslc REQUIRED)
 
 
@@ -51,21 +60,36 @@ if (NOT EXISTS "${taskflow_src}")
             cpp_taskflow
             GIT_REPOSITORY      https://github.com/taskflow/taskflow.git
             GIT_TAG             v3.6.0
-            #        SOURCE_DIR     "${CMAKE_CURRENT_SOURCE_DIR}/external/cpp_taskflow"
-            #        BINARY_DIR     "${CMAKE_CURRENT_BINARY_DIR}/external_build/cpp_taskflow"
     )
     FetchContent_MakeAvailable(cpp_taskflow)
 endif ()
 
-#if (NOT EXISTS "${json_src}")
-#    FetchContent_Declare(
-#            json
-#            GIT_REPOSITORY      https://github.com/nlohmann/json.git
-#            GIT_TAG             v3.11.3
-#            SOURCE_DIR     "${CMAKE_CURRENT_SOURCE_DIR}/external/"
-#    )
-#    FetchContent_MakeAvailable(json)
-#endif ()
+if (NOT EXISTS "${json_src}")
+    FetchContent_Declare(
+            json
+            GIT_REPOSITORY      https://github.com/nlohmann/json.git
+            GIT_TAG             v3.11.3
+    )
+    FetchContent_MakeAvailable(json)
+endif ()
+
+if (NOT EXISTS "${winpty_src}")
+    FetchContent_Declare(
+            winpty
+            GIT_REPOSITORY      https://github.com/rprichard/winpty.git
+            GIT_TAG             master
+    )
+    FetchContent_MakeAvailable(winpty)
+endif ()
+
+if (NOT EXISTS "${assimp_src}")
+    FetchContent_Declare(
+            assimp
+            GIT_REPOSITORY      https://github.com/assimp/assimp.git
+            GIT_TAG             v5.4.0
+    )
+    FetchContent_MakeAvailable(assimp)
+endif ()
 
 file(GLOB_RECURSE yic_srcs "src/*.h" "src/*.cpp" "pch/vkGlobal.cpp")
 file(GLOB_RECURSE vertex ${CMAKE_SOURCE_DIR}/src/shaders/*.vert)
@@ -103,28 +127,42 @@ target_precompile_headers(vulkan PRIVATE ${pch_files})
 target_precompile_headers(vkMMD PRIVATE ${pch_files})
 
 if(MSVC)
-    target_link_libraries(vulkan ${glfw_msvc} "Vulkan::Vulkan" "imgui" "Saba" "nfd")
+    target_link_libraries(vulkan ${glfw_msvc} "Vulkan::Vulkan" "imgui" "Saba" "nfd" ${winpty_lib})
     target_include_directories(vulkan PRIVATE ${CMAKE_BINARY_DIR})
     target_include_directories(vulkan PRIVATE external/spdlog)
     target_include_directories(vulkan PRIVATE taskflow)
     target_include_directories(vulkan PRIVATE nvpro_core)
+    target_include_directories(vulkan PRIVATE winpty)
+    target_include_directories(vulkan PRIVATE external/assimp-src/include external/assimp-build/include)
 
-    target_link_libraries(vkMMD ${glfw_msvc} "Vulkan::Vulkan" "Saba" "imgui" "nfd")
+
+    target_link_libraries(vkMMD ${glfw_msvc} "Vulkan::Vulkan" "Saba" "imgui" "nfd" ${winpty_lib})
 elseif (MINGW)
-    target_link_libraries(vulkan ${glfw_mingw} "Vulkan::Vulkan" "imgui" "Saba" "nfd")
+    target_link_libraries(vulkan ${glfw_mingw} "Vulkan::Vulkan" "imgui" "Saba" "nfd" ${winpty_lib} ${assimp_lib})
     target_include_directories(vulkan PRIVATE ${CMAKE_BINARY_DIR})
     target_include_directories(vulkan PRIVATE external/spdlog)
     target_include_directories(vulkan PRIVATE taskflow)
     target_include_directories(vulkan PRIVATE nvpro_core)
+    target_include_directories(vulkan PRIVATE winpty)
+    target_include_directories(vulkan PRIVATE external/assimp-src/include external/assimp-build/include)
 
-
-    target_link_libraries(vkMMD ${glfw_mingw} "Vulkan::Vulkan" "Saba" "imgui" "nfd")
+    target_link_libraries(vkMMD ${glfw_mingw} "Vulkan::Vulkan" "Saba" "imgui" "nfd" ${winpty_lib} )
     target_include_directories(vkMMD PRIVATE external/spdlog)
 else ()
     message(FATAL_ERROR "unsupported compiler")
 endif ()
 
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+    if (WIN32)
+        if (MSVC)
+            target_compile_definitions(vulkan PRIVATE USE_WINMAIN)
+        endif ()
+    endif()
+endif()
+
 file(INSTALL saba/viewer/Saba/Viewer/resource DESTINATION ${CMAKE_BINARY_DIR})
+file(INSTALL src/vkH/json/BaseSetting.json DESTINATION ${CMAKE_BINARY_DIR})
+file(INSTALL external/assimp-build/bin/libassimp-5.dll DESTINATION ${CMAKE_BINARY_DIR})
 
 add_subdirectory(imgui)
 add_subdirectory(nativefiledialog)

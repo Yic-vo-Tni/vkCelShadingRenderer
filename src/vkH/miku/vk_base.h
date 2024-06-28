@@ -8,6 +8,7 @@
 #include "niLou/vkSwapchain.h"
 #include "niLou/vkPipeline.h"
 #include "niLou/vkDescriptor.h"
+#include "niLou/vkRenderPass.h"
 
 #include "editor/vkImgui.h"
 
@@ -15,6 +16,8 @@
 #include "ke_q/vk_allocator.h"
 
 #include "vkInit/vk_window.h"
+
+#include "editor/vkImguiTaskQueue.h"
 
 namespace yic {
 
@@ -30,12 +33,12 @@ namespace yic {
                 vk::Format colorFormat = vk::Format::eR8G8B8A8Unorm, vk::Format depthFormat = vk::Format::eUndefined);
         vk_base& createDepthBuffer();
         virtual vk_base& createRenderPass();
-//        virtual vk_base& createGraphicsPipeline() = 0;
-//        virtual vk_base& updateDescriptorSet() = 0;
         vk_base& createFrameBuffer();
         vk_base& prepareFrame();
         vk_base& setViewport(const vk::CommandBuffer& cmd);
         vk_base& submitFrame(const std::vector<vk::CommandBuffer>& frontCmd = {}, const std::vector<vk::CommandBuffer>& backCmd = {});
+
+        vk_base& updateRenderDepthImage();
 
         vk::CommandBuffer createTempCmdBuf();
         void submitTempCmdBuf(vk::CommandBuffer& cmd);
@@ -55,6 +58,7 @@ namespace yic {
         [[nodiscard]] inline auto& getDepthMem() const { return mDepthMemory;}
         [[nodiscard]] inline auto& getDepthImage() const { return mDepthImage;}
         [[nodiscard]] inline auto& getDepthImageView() const { return mDepthView;}
+        [[nodiscard]] inline auto& getRenderDepthImageView() const { return mRenderDepthView;}
         [[nodiscard]] inline auto& getCommandPool() const { return mCommandPool;}
         [[nodiscard]] inline auto& getCmdBuffer() const { return mCommandBuffers;}
         [[nodiscard]] inline auto& getFences() const { return mWaitFences;}
@@ -82,10 +86,12 @@ namespace yic {
         vk::DeviceMemory mDepthMemory{VK_NULL_HANDLE};
         vk::ImageView mDepthView{VK_NULL_HANDLE};
 
+        vk::Image newDepthImage;
+        vk::ImageView mRenderDepthView{VK_NULL_HANDLE};
+
         bool mVsync{false};
 
         vkDescriptor mDesc{};
-
 
         ///////////////////
 
@@ -98,6 +104,7 @@ namespace yic {
 
     private:
         void onFrameBufferSize(int w, int h);
+        void transitionImageLayout(vk::ImageLayout oldLayout, vk::ImageLayout newLayout, const vk::CommandBuffer& cmd, vk::Image image);
     };
 
 } // yic

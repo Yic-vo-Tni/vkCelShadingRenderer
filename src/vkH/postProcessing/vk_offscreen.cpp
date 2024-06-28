@@ -7,37 +7,41 @@
 
 namespace yic {
 
-    vk_offscreen &vk_offscreen::createOffscreenPipeline() {
-        mOffScreenDescriptor.addDescriptorSetLayout({vk::DescriptorSetLayoutBinding{
-            vk::DescriptorSetLayoutBinding{0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
-        }});
+    vkOffScreen &vkOffScreen::createOffScreenImage() {
+        imageCreateInfo.setExtent({mExtent.width, mExtent.height, 1});
+        imageCreateInfo.usage |= vk::ImageUsageFlagBits::eColorAttachment;
+        vkCreate([&](){mImage.image = mDevice.createImage(imageCreateInfo);}, "create depth image");
 
-        graphicsPipelineGeneratorCombined pipelineGeneratorCombined{mDevice, mOffScreenDescriptor.getPipelineLayout(), mOffScreenRenderPass};
-        pipelineGeneratorCombined.addShader(ke_q::loadFile(""), vk::ShaderStageFlagBits::eVertex);
-        pipelineGeneratorCombined.addShader(ke_q::loadFile(""), vk::ShaderStageFlagBits::eFragment);
+        vk::MemoryRequirements memReqs{mDevice.getImageMemoryRequirements(mImage.image)};
+        vk::MemoryAllocateInfo allocateInfo{memReqs.size, vk_fn::getMemoryType(mPhysicalDevice, memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal)};
+        vkCreate([&](){ mOffMemory = mDevice.allocateMemory(allocateInfo); }, "allocate depth memory");
+        //
+        mDevice.bindImageMemory(mImage.image, mOffMemory, 0);
 
-        mOffScreenGraphicsPipeline = pipelineGeneratorCombined.createGraphicsPipeline();
+        if (mDepthImageView)
+            mDevice.destroy(mDepthImageView);
+        if (mDepthImage)
+            mDevice.destroy(mDepthImage);
+        if (mDepthImageMemory)
+            mDevice.free(mDepthImageMemory);
+
+        vk::ImageCreateInfo createInfo{{},
+                                       vk::ImageType::e2D, mDepthFormat, vk::Extent3D{mExtent, 1},
+                                       1, 1, vk::SampleCountFlagBits::e1, {},
+                                       vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eSampled};
+        vkCreate([&](){ mDepthImage = mDevice.createImage(createInfo); }, "create depth image");
+
+        ///
+        vk::MemoryRequirements memDepthReqs{mDevice.getImageMemoryRequirements(mDepthImage)};
+        vk::MemoryAllocateInfo allocateDepthInfo{memDepthReqs.size, vk_fn::getMemoryType(mPhysicalDevice, memDepthReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal)};
+        vkCreate([&](){ mDepthImageMemory = mDevice.allocateMemory(allocateDepthInfo); }, "allocate depth memory");
+        //
+        mDevice.bindImageMemory(mDepthImage, mDepthImageMemory, 0);
 
         return *this;
     }
 
-    vk_offscreen &vk_offscreen::updateDescriptor() {
-        vk::SamplerCreateInfo samplerCreateInfo{{}, vk::Filter::eLinear, vk::Filter::eNearest, vk::SamplerMipmapMode::eLinear,
-                                                vk::SamplerAddressMode::eClampToEdge, vk::SamplerAddressMode::eClampToEdge, vk::SamplerAddressMode::eClampToEdge,
-                                                0.f, vk::False, 1.f,
-                                                vk::False, vk::CompareOp::eAlways,
-                                                0.f, 0.f,
-                                                vk::BorderColor::eIntOpaqueBlack, vk::False};
-        vkCreate([&](){ mSampler = mDevice.createSampler(samplerCreateInfo);}, " create off-screen sampler ");
-
-        mOffScreenDescriptor
-                .createDescriptorPool()
-                .createDescriptorSets()
-                .addDescriptorSet({
-                                          vk::DescriptorImageInfo{mSampler, {}, vk::ImageLayout::eShaderReadOnlyOptimal},
-                                  })
-                .update();
-
+    vkOffScreen &vkOffScreen::createOffScreenImageView() {
 
 
         return *this;

@@ -4,8 +4,15 @@
 
 #include "src/vk_App.h"
 
+#ifdef  USE_WINMAIN
 
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nCmdShow) {
+
+#else
 int main(){
+
+#endif
+
     yic::Application app{};
 
     try {
@@ -17,4 +24,5 @@ int main(){
 
     return EXIT_SUCCESS;
 }
+
 

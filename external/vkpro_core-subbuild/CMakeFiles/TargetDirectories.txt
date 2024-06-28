@@ -1,0 +1,3 @@
+F:/Yicvot/Yicvot/external/vkpro_core-subbuild/CMakeFiles/vkpro_core-populate.dir
+F:/Yicvot/Yicvot/external/vkpro_core-subbuild/CMakeFiles/edit_cache.dir
+F:/Yicvot/Yicvot/external/vkpro_core-subbuild/CMakeFiles/rebuild_cache.dir

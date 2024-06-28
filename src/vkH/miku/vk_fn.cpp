@@ -37,7 +37,7 @@ namespace yic {
     bool vk_fn::getDepthFormat(vk::PhysicalDevice physicalDevice, vk::Format& format) {
         if (format == vk::Format::eUndefined){
             auto feature {vk::FormatFeatureFlagBits::eDepthStencilAttachment};
-            for(const auto& f : {vk::Format::eD24UnormS8Uint, vk::Format::eD32SfloatS8Uint, vk::Format::eD16UnormS8Uint}){
+            for(const auto& f : {vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint, vk::Format::eD16UnormS8Uint}){
                 vk::FormatProperties formatProperties{};
                 physicalDevice.getFormatProperties(f, &formatProperties);
                 if ((formatProperties.optimalTilingFeatures & feature) == feature){

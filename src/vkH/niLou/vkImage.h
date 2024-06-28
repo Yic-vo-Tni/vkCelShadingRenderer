@@ -38,6 +38,7 @@ namespace yic {
     class vkImage : public vkAllocator, public textureState{
     public:
         vkImage() = default;
+        ~vkImage() { mDevice.destroy(mStagingBuffer.buffer); mDevice.free(mStagingBuffer.deviceMemory); }
         explicit vkImage(const std::string& filePath, const bool& def = true);
     protected:
         MemReqs memReqs = [this](){ return vk::MemoryRequirements{mDevice.getImageMemoryRequirements(mImage.image)};};

@@ -31,9 +31,10 @@ namespace yic {
         return *this;
     }
 
-    vkSkybox &vkSkybox::renderSkybox() {
+    vkSkybox &vkSkybox::renderSkybox(const bool& render) {
         vk::CommandBufferBeginInfo beginInfo{vk::CommandBufferUsageFlagBits::eOneTimeSubmit};
-        std::vector<vk::ClearValue> clearValues{vk::ClearColorValue{ 1.0f, 0.8f, 0.75f, 1.0f},{}};
+        //std::vector<vk::ClearValue> clearValues{vk::ClearColorValue{ 1.0f, 0.8f, 0.75f, 1.0f},{}};
+        std::vector<vk::ClearValue> clearValues{vk::ClearColorValue{ 0.2f, 0.2f, 0.25f, 1.0f},{}};
 
         uint32_t imageIndex = mSwapchain.getActiveImageIndex();
         mCommandBuffers[imageIndex].begin(beginInfo);
@@ -54,7 +55,11 @@ namespace yic {
                 cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, mSkyboxPipeline[eSkybox]);
                 cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, mSkyboxPipeLayout[eSkybox], 0, mSkyboxDescriptor[eSkybox].getDescriptorSets(),
                                        nullptr);
-                cmd.draw(36, 1, 0, 0);
+
+
+                if (render){
+                    cmd.draw(36, 1, 0, 0);
+                }
             }
             mCommandBuffers[imageIndex].endRenderPass();
         }

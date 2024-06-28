@@ -11,6 +11,7 @@ namespace yic {
     }
 
     void modelTransformManager::addPmxVMDAnim(const std::string& vmdPath) {
+        std::lock_guard<std::mutex> guard(mVmdMutex);
         std::vector<std::string> vmd{vmdPath};
         mInputModels[0].m_vmdPaths = vmd;
     }

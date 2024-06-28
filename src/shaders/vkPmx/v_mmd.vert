@@ -13,9 +13,18 @@ layout (binding = 0) uniform UBO
 	mat4 wvp;
 } ubo;
 
+layout(set = 0, binding = 5) uniform LightVp{
+	mat4 vp;
+} direcLightMatrix;
+
 layout (location = 0) out vec3 outPos;
 layout (location = 1) out vec3 outNor;
 layout (location = 2) out vec2 outUV;
+
+layout (location = 3) out float fragDistance;
+
+layout (location = 4) out vec4 fragPosLightSpace;
+
 
 out gl_PerVertex 
 {
@@ -24,8 +33,13 @@ out gl_PerVertex
 
 void main() 
 {
+	fragPosLightSpace = direcLightMatrix.vp * vec4(inPos, 1.f);
+
 	gl_Position = ubo.wvp * vec4(inPos.xyz, 1.0);
 	outPos = (ubo.wv * vec4(inPos.xyz, 1.0)).xyz;
 	outNor = mat3(ubo.wv) * inNor;
 	outUV = vec2(inUV.x, 1.0 - inUV.y);
+
+	vec4 viewPos = ubo.wv * vec4(inPos.xyz, 1.f);
+	fragDistance = length(viewPos.xyz);
 }

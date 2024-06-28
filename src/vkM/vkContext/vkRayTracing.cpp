@@ -148,7 +148,7 @@ namespace yic {
 
         vk::AccelerationStructureGeometryTrianglesDataKHR triangles{
                 vk::Format::eR32G32B32Sfloat, // X 32 Y 32 Z 32
-                vertexAddress, sizeof (vkPmx::Vertex), pmx.vertices - 1,
+                vertexAddress, sizeof (yicVertex), pmx.vertices - 1,
                 pmx.indexType, indexAddress
         };
 

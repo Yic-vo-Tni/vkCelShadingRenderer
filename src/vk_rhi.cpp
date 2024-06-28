@@ -11,16 +11,26 @@ namespace yic {
 
     RHI::RHI() {
         mStart = std::chrono::high_resolution_clock::now();
+
+        //baseSetting::save(R"(BaseSetting.json)");
+        baseSetting::firstDefaultValue(R"(BaseSetting.json)");
+
+        baseSetting::load(R"(BaseSetting.json)");
+
         initVulkan();
     }
 
     RHI::~RHI() {
+        std::cout.rdbuf(mOldCoutBuf);
         vkImContext.reset();
     };
 
     void RHI::initVulkan() {
+        setup_logger();
+        mOldCoutBuf = std::cout.rdbuf(ImGuiStreamBuf::get());
         /// glfw window
-        Window::get(1200, 800, "Yicvot")->glfwCallback();
+        //Window::get(1800, 1200, "Yicvot")->glfwCallback();
+        Window::get(baseSetting::GetWidth(), baseSetting::GetHeight())->glfwCallback();
 
         /// vk init
         vk::PhysicalDeviceAccelerationStructureFeaturesKHR accelFeature{vk::True};
@@ -63,6 +73,7 @@ namespace yic {
         Window::get()->calculateTime();
         // vk
         vkContext.updateEveryFrame();
+        ImGuiTerminal::get()->update();
 
         vkImContext->recreate();
         {

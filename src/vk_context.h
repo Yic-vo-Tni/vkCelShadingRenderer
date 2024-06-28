@@ -16,7 +16,13 @@
 #include "vkInit/vk_init.h"
 
 #include "pmx/pmx_context.h"
+#include "model/modelManager.h"
 #include "environment/vkSkybox.h"
+
+#include "postProcessing/renderDepth.h"
+#include "postProcessing/shadowMap.h"
+
+#include "volumeFog/volumeFog.h"
 
 namespace yic {
 
@@ -36,26 +42,35 @@ namespace yic {
         [[nodiscard]] std::vector<vk::CommandBuffer> getActiveFrontCmdBuf() const{
             std::vector<vk::CommandBuffer> cmdBuffers;
             cmdBuffers.push_back(mSkyboxContext->getActiveCmdBuf());
+            cmdBuffers.push_back(mRenderDepth->getActiveCmdBuf());
+            cmdBuffers.push_back(shadowMap::get()->getShadowMapCmd());
 
             return cmdBuffers;
         }
-
-        [[nodiscard]] inline auto& getPmxModel() const { return mPmxModel;}
 
     private: // pmx
         vk_context& prePmxContext();
         // skybox
         vk_context& preSkyContext();
 
+        vk_context& pmxRender();
+
     private:
         std::unique_ptr<vkPmx::pmx_context> mPmxContext{}, mBackupContext;
         std::unique_ptr<vkSkybox> mSkyboxContext{};
+        std::unique_ptr<renderDepth> mRenderDepth{};
 
     private: /// transfer buf
         vk::CommandPool mTransferPool{};
 
         vkPmx::pmxModel mPmxModel;
         std::thread mPmxThread;
+
+
+    private: // test
+        bool skyBox{false};
+        bool volumeFog{false};
+
     };
 
 } // yic

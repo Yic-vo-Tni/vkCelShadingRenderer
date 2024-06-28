@@ -61,14 +61,16 @@ namespace yic {
         vk::ImageCreateInfo createInfo{{},
                                        vk::ImageType::e2D, mDepthFormat, vk::Extent3D{mExtent, 1},
                                        1, 1, vk::SampleCountFlagBits::e1, {},
-                                       vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransferSrc};
+                                       vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eSampled};
         vkCreate([&](){ mDepthImage = mDevice.createImage(createInfo); }, "create depth image");
 
+        ///
         vk::MemoryRequirements memReqs{mDevice.getImageMemoryRequirements(mDepthImage)};
         vk::MemoryAllocateInfo allocateInfo{memReqs.size, vk_fn::getMemoryType(mPhysicalDevice, memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal)};
         vkCreate([&](){ mDepthMemory = mDevice.allocateMemory(allocateInfo); }, "allocate depth memory");
-
+        //
         mDevice.bindImageMemory(mDepthImage, mDepthMemory, 0);
+
 
         auto cmd = createTempCmdBuf();
         vk::ImageSubresourceRange subRange{vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil, {}, 1, {}, 1};
@@ -79,12 +81,70 @@ namespace yic {
         const vk::PipelineStageFlags dstStageFlag { vk::PipelineStageFlagBits::eEarlyFragmentTests };
 
         cmd.pipelineBarrier(srcStageFlag, dstStageFlag, {}, {}, {}, memBarrier);
+        //
         submitTempCmdBuf(cmd);
 
         mDepthView = vk_fn::createImageView(mDevice, mDepthImage, mDepthFormat, vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil);
 
+
+
+        ////
+
+
+
+        vk::ImageCreateInfo imageCreateInfo{
+                {},
+                vk::ImageType::e2D,
+                mDepthFormat,  // 选择合适的深度格式
+                {mExtent.width, mExtent.height, 1},
+                1,  // Mip levels
+                1,  // Array layers
+                vk::SampleCountFlagBits::e1,
+                vk::ImageTiling::eOptimal,
+                vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
+                vk::SharingMode::eExclusive,
+                {},
+                vk::ImageLayout::eUndefined  // 初始布局
+        };
+        newDepthImage = mDevice.createImage(imageCreateInfo);
+
+        vk::MemoryRequirements memReqsR = mDevice.getImageMemoryRequirements(newDepthImage);
+        vk::MemoryAllocateInfo allocateInfoR{
+                memReqsR.size,
+                vk_fn::getMemoryType(mPhysicalDevice, memReqsR.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal)
+        };
+        vk::DeviceMemory newDepthMemory = mDevice.allocateMemory(allocateInfoR);
+        mDevice.bindImageMemory(newDepthImage, newDepthMemory, 0);
+
+        updateRenderDepthImage();
+
+        mRenderDepthView = vk_fn::createImageView(mDevice, newDepthImage, mDepthFormat, vk::ImageAspectFlagBits::eDepth);
+
         return *this;
     }
+
+    vk_base &vk_base::updateRenderDepthImage() {
+        auto cmdR = createTempCmdBuf();
+        transitionImageLayout(vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, cmdR, newDepthImage);
+        transitionImageLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal, vk::ImageLayout::eTransferSrcOptimal, cmdR, mDepthImage);
+
+        vk::ImageCopy copyRegion{
+                {vk::ImageAspectFlagBits::eDepth, 0, 0, 1},
+                {},
+                {vk::ImageAspectFlagBits::eDepth, 0, 0, 1},
+                {},
+                {mExtent.width, mExtent.height, 1}
+        };
+        cmdR.copyImage(mDepthImage, vk::ImageLayout::eTransferSrcOptimal, newDepthImage, vk::ImageLayout::eTransferDstOptimal, copyRegion);
+
+// Transition the new image to the shader readable layout
+        transitionImageLayout(vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal, cmdR, newDepthImage);
+        transitionImageLayout(vk::ImageLayout::eTransferSrcOptimal, vk::ImageLayout::eDepthStencilAttachmentOptimal, cmdR, mDepthImage);
+        submitTempCmdBuf(cmdR);
+
+        return *this;
+    }
+
 
     vk_base &vk_base::createOffscreenRenderPass() {
         std::vector<vk::AttachmentDescription> attachmentDes{
@@ -242,6 +302,8 @@ namespace yic {
         return *this;
     }
 
+
+
     vk::CommandBuffer vk_base::createTempCmdBuf() {
         vk::CommandBufferAllocateInfo allocateInfo{mCommandPool, vk::CommandBufferLevel::ePrimary, 1};
         vk::CommandBuffer cmd = mDevice.allocateCommandBuffers(allocateInfo).front();
@@ -283,6 +345,29 @@ namespace yic {
     void vk_base::endCmd(vk::CommandBuffer &cmd) {
         cmd.endRenderPass();
         cmd.end();
+    }
+
+    void vk_base::transitionImageLayout(vk::ImageLayout oldLayout, vk::ImageLayout newLayout, const vk::CommandBuffer& cmd, vk::Image image) {
+        vk::ImageSubresourceRange imageSubresourceRange{vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil, 0, 1, 0, 1};
+        vk::ImageMemoryBarrier barrier{{}, {}, oldLayout, newLayout,
+                                       vk::QueueFamilyIgnored, vk::QueueFamilyIgnored, image,
+                                       imageSubresourceRange};
+        vk::PipelineStageFlags srcStage, dstStage;
+        if (oldLayout == vk::ImageLayout::eUndefined){
+            barrier.setSrcAccessMask(vk::AccessFlagBits::eNoneKHR)
+                    .setDstAccessMask(vk::AccessFlagBits::eTransferWrite);
+
+            srcStage = vk::PipelineStageFlagBits::eTopOfPipe;
+            dstStage = vk::PipelineStageFlagBits::eTransfer;
+        } else {
+            barrier.setSrcAccessMask(vk::AccessFlagBits::eTransferWrite)
+                    .setDstAccessMask(vk::AccessFlagBits::eShaderRead);
+
+            srcStage = vk::PipelineStageFlagBits::eTransfer;
+            dstStage = vk::PipelineStageFlagBits::eFragmentShader;
+        }
+
+        cmd.pipelineBarrier(srcStage, dstStage, {}, {}, {}, barrier);
     }
 
     bool vk_base::isMinimized(bool doSleeping) {

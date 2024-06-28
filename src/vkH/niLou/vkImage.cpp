@@ -32,6 +32,7 @@ namespace yic {
             mImageSize += imageSize;
             mExtent = vk::Extent2D{(uint32_t)w, (uint32_t)h};
             mPixels.insert(mPixels.end(), pixels, pixels + imageSize);
+            stbi_image_free(pixels);
         } else { vkDebug{ std::cerr << "failed to load tex"; } }
 
         return *this;

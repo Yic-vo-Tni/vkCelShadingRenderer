@@ -24,14 +24,15 @@ namespace yic {
         vkDescriptor& addDescriptorSetLayout(const std::vector<std::pair<vk::DescriptorSetLayoutBinding, uint32_t>>& bindings);
         vkDescriptor& createDescriptorPool();
         vkDescriptor& createDescriptorSets();
-        vkDescriptor& pushBackDesSets();
+        vkDescriptor& pushBackDesSets(uint32_t set = 0);
 
         vkDescriptor& addDescriptorSet(const std::vector<std::variant<vk::DescriptorBufferInfo, vk::DescriptorImageInfo>>& info = {});
-        vkDescriptor& updateDescriptorSet(const std::vector<std::variant<vk::DescriptorBufferInfo, vk::DescriptorImageInfo>>& info = {});
+        vkDescriptor& updateDescriptorSet(const std::vector<std::variant<vk::DescriptorBufferInfo, vk::DescriptorImageInfo>>& info = {}, uint32_t set = 0);
         vkDescriptor& update(){
             mDevice.updateDescriptorSets(mWriteDescriptor, nullptr);
             return *this;
         }
+        vkDescriptor& update(uint32_t index_, const std::vector<std::variant<vk::DescriptorBufferInfo, vk::DescriptorImageInfo>> &info);
 
         [[nodiscard]] inline auto& getId() const { return mUniqueId;}
         [[nodiscard]] inline auto& getDescriptorPool() const { return mDescriptorPool;}
@@ -57,6 +58,8 @@ namespace yic {
         std::vector<vk::DescriptorSet> mDescriptorSets{};
         std::vector<vk::WriteDescriptorSet> mWriteDescriptor{};
         std::vector<std::vector<vk::WriteDescriptorSet>> mVecWriteDesSets{};
+
+        bool updateSet{false};
     };
 
 } // yic

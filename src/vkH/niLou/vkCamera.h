@@ -11,6 +11,13 @@
 
 namespace yic {
 
+    inline void printMatrixSpdlog(const glm::mat4& mat) {
+        vkInfo("Printing Matrix:");
+        for (int i = 0; i < 4; i++) {
+            vkWarn("{: >8} {: >8} {: >8} {: >8}", mat[0][i], mat[1][i], mat[2][i], mat[3][i]);
+        }
+    }
+
     class vkCamera {
         float lastX =  1200.0f / 2.0;
         float lastY =  800.0 / 2.0;
@@ -34,6 +41,8 @@ namespace yic {
         glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
         glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
         vkGet auto get = [](){ return Singleton<vkCamera>::get(); };
+        [[nodiscard]] inline auto& getCameraPos() const { return cameraPos  ;}
+        [[nodiscard]] inline auto& getPos() const { return position;}
 
         [[nodiscard]] glm::mat4 getViewMatrix() {
             mView = glm::translate(glm::mat4_cast(orientation), -position);
@@ -42,7 +51,8 @@ namespace yic {
 
         [[nodiscard]] glm::mat4 getProjMatrix(vk::Extent2D extent) {
             mProj = glm::perspective(fov, static_cast<float>(extent.width) / static_cast<float>(extent.height),
-                                     0.1f, 100.f) * glm::scale(glm::mat4(1.f), glm::vec3(1.f, -1.f, 1.f));
+                                     0.1f, 500.f) * glm::scale(glm::mat4(1.f), glm::vec3(1.f, -1.f, 1.f));
+
             return mProj;
         }
 

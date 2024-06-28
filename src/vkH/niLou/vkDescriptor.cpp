@@ -51,9 +51,9 @@ namespace yic {
         return *this;
     }
 
-    vkDescriptor &vkDescriptor::pushBackDesSets() {
+    vkDescriptor &vkDescriptor::pushBackDesSets(uint32_t set) {
         vk::DescriptorSetAllocateInfo allocateInfo{mDescriptorPool, mDescriptorSetLayouts};
-        vkCreate([&](){mDescriptorSets.push_back(mDevice.allocateDescriptorSets(allocateInfo)[0]);}, "allocate descriptor sets");
+        vkCreate([&](){mDescriptorSets.push_back(mDevice.allocateDescriptorSets(allocateInfo)[set]);}, "allocate descriptor sets");
 
         return *this;
     }
@@ -81,9 +81,9 @@ namespace yic {
     }
 
     vkDescriptor &vkDescriptor::updateDescriptorSet(
-            const std::vector<std::variant<vk::DescriptorBufferInfo, vk::DescriptorImageInfo>> &info) {
+            const std::vector<std::variant<vk::DescriptorBufferInfo, vk::DescriptorImageInfo>> &info, uint32_t set) {
         mVecWriteDesSets.resize(index + 1);
-        for(uint32_t i = 0; auto& bind : mBindings[0]){
+        for(uint32_t i = 0; auto& bind : mBindings[set]){
             std::visit([&](auto&& arg){
                 using T = std::decay_t<decltype(arg)>;
                 if constexpr (std::is_same_v<T, vk::DescriptorBufferInfo>){
@@ -99,6 +99,28 @@ namespace yic {
         mDevice.updateDescriptorSets(mVecWriteDesSets[index], nullptr);
 
         index++;
+        return *this;
+    }
+
+    vkDescriptor &vkDescriptor::update(uint32_t index_,
+                                       const std::vector<std::variant<vk::DescriptorBufferInfo, vk::DescriptorImageInfo>> &info) {
+        std::vector<vk::WriteDescriptorSet> writeDesSet;
+        for(uint32_t i = 0; auto& bind : mBindings[0]){
+            std::visit([&](auto&& arg){
+                using T = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<T, vk::DescriptorBufferInfo>){
+                    writeDesSet.push_back(vk::WriteDescriptorSet{mDescriptorSets[index_], bind.binding, 0,
+                                                                 bind.descriptorType, {}, arg});
+                }else if constexpr (std::is_same_v<T, vk::DescriptorImageInfo>){
+                    writeDesSet.push_back(vk::WriteDescriptorSet{mDescriptorSets[index_], bind.binding, 0,
+                                                                             bind.descriptorType, arg});
+                }
+            }, info[i]);
+            i++;
+        }
+
+        mDevice.updateDescriptorSets(writeDesSet, nullptr);
+
         return *this;
     }
 

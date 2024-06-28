@@ -2,10 +2,15 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/FFmpeg" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/assimp-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/cpp_taskflow-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/json-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/spdlog" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/stb" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/winpty-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/imgui" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/nativefiledialog" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/nvpro_core" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/saba" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/saba/external/glfw" vcs="Git" />

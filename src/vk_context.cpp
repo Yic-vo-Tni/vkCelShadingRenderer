@@ -19,12 +19,28 @@ namespace yic {
                 .setFlags(vk::CommandPoolCreateFlagBits::eTransient | vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
         mTransferPool = mDevice.createCommandPool(transferCmdPoolInfo);
         vkPmx::StagingBuffer::init(vk_init::get(), mTransferPool);
+        shadowMap::get()->init(vk_init::get()->device(), vk_init::get()->physicalDevice());
+
+        volumeFog::get()->init(vk_init::get()->device(), vk_init::get()->physicalDevice());
+
+        auto cmd = createTempCmdBuf();
+        volumeFog::get()->copyDataTo3DPerlinNoise(cmd);
+        submitTempCmdBuf(cmd);
 
         return *this;
     }
 
     vk_context &vk_context::prepareEveryContext() {
         this            ->preSkyContext();
+        mRenderDepth = std::make_unique<renderDepth>(vk_init::get(), mSwapchain, mRenderDepthView);
+
+        volumeFog::get()->create(mRenderPass);
+        modelManager::get()->init(vk_init::get(), mSwapchain.getImageCount(), mRenderPass);
+
+        vkImguiManager::get()->addRenderToTest([&](){
+            ImGui::Checkbox("Enable VolumeFog", &volumeFog);
+            ImGui::Checkbox("Enable SkyBox", &skyBox);
+        });
 
         return *this;
     }
@@ -32,32 +48,51 @@ namespace yic {
     vk_context &vk_context::updateEveryFrame() {
         this            ->prepareFrame();
         mSkyboxContext  ->updateEveryFrame();
+        shadowMap::get()->updateEveryFrame();
+        lightManager::get()->update();
+
+        modelManager::get()   ->updateEveryFrame(vkCamera::get()->getProjMatrix(mExtent) * vkCamera::get()->getViewMatrix());
 
         if (modelTransformManager::get()->isLoadPmxModel()){
-            mPmxThread = std::thread([&](){this->prePmxContext();});
-            mPmxThread.detach();
+            prePmxContext();
             modelTransformManager::get()->setLoadPmxModel();
         }
         if (modelTransformManager::get()->isRenderPmxModel()){
             mPmxContext     ->updateEveryFrame(vkCamera::get()->getViewMatrix(), vkCamera::get()->getProjMatrix(mExtent));
         }
 
+        updateRenderDepthImage();
+
+
         return *this;
     }
 
     vk_context &vk_context::orRender() {
-        mSkyboxContext  ->renderSkybox();
+        //if (skyBox){
+            mSkyboxContext  ->renderSkybox(skyBox);
+        //}
+        mRenderDepth    ->renderDepthImage();
+
+        auto& cmd = shadowMap::get()->renderShadowMapBegin();
+        modelManager::get()->drawShadowMap(cmd);
+        if (mPmxContext)
+            mPmxContext->drawDirectLightShadowMap(cmd);
+        shadowMap::get()->renderShadowMapEnd();
 
         return *this;
     }
 
     vk_context &vk_context::rasterization(const vk::CommandBuffer &cmd) {
-        if (modelTransformManager::get()->isRenderPmxModel()) {
-            this->setViewport(cmd);
+        this->setViewport(cmd);
 
-            mPmxContext->updateAnimation();
-            mPmxContext->update();
-            mPmxContext->draw(cmd);
+        if (modelTransformManager::get()->isRenderPmxModel()) {
+            vkRenderTaskQueue::get()->execute(cmd);
+        }
+
+        modelManager::get()->draw(cmd);
+
+        if (volumeFog){
+            volumeFog::get()->draw(cmd);
         }
 
         return *this;
@@ -71,22 +106,30 @@ namespace yic {
 
 
     vk_context &vk_context::prePmxContext() {
-        mBackupContext = std::make_unique<vkPmx::pmx_context>(modelTransformManager::get()->getInputModels(), vk_init::get(), mSwapchain.getImageCount(), mRenderPass, mCommandPool);
-        tasker::wQueueFactory::get()->execute(vkTaskGroupType::eResourceLoadGroup);
-        mPmxContext.swap(mBackupContext);
-        if (!modelTransformManager::get()->getInputModels()[0].m_vmdPaths.empty()){
-            modelTransformManager::get()->setLoadVMDAnim();
-        }
-        mBackupContext.reset();
-        if (!modelTransformManager::get()->isRenderPmxModel()){
-            modelTransformManager::get()->setRenderPmxModel();
-        }
+        pmxRender();
 
         return *this;
     }
 
     vk_context &vk_context::preSkyContext() {
         mSkyboxContext = std::make_unique<vkSkybox>(vk_init::get(), mSwapchain);
+
+        return *this;
+    }
+
+    vk_context &vk_context::pmxRender() {
+        mBackupContext = std::make_unique<vkPmx::pmx_context>(modelTransformManager::get()->getInputModels(), vk_init::get(), mSwapchain.getImageCount(), mRenderPass);
+        tasker::wQueueFactory::get()->execute(vkTaskGroupType::eResourceLoadGroup);
+        vkRenderTaskQueue::get()->removeTask(mPmxContext);
+        mPmxContext.swap(mBackupContext);
+        vkRenderTaskQueue::get()->addTask(mPmxContext, [this](const vk::CommandBuffer& cmd) {
+            mPmxContext->updateAnimation();
+            mPmxContext->update();
+            mPmxContext->draw(cmd);}).update();
+        mBackupContext.reset();
+        if (!modelTransformManager::get()->isRenderPmxModel()){
+            modelTransformManager::get()->setRenderPmxModel();
+        }
 
         return *this;
     }

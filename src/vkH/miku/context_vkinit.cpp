@@ -23,46 +23,6 @@ namespace yic{
         return *this;
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     contextCreateInfo &contextCreateInfo::addInstanceLayer(const char *layer, bool optimal) {
         if (optimal){ instanceLayers_.push_back(layer); }
         return *this;

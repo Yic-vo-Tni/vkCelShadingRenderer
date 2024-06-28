@@ -42,6 +42,12 @@ namespace yic {
         template<typename T>
         vkAllocator& updateBuffer(const T& src) { memcpy(mData, &src, sizeof(src)); return *this;}
         template<typename T>
+        vkAllocator& updateBuffer(const std::vector<T>& src) {
+            if (!src.empty())
+                memcpy(mData, src.data(), src.size() * sizeof (T));
+            return *this;
+        }
+        template<typename T>
         vkAllocator& updateBuffer(const T& src, size_t size) { memcpy(mData, &src, size); return *this;}
         template<typename T>
         vkAllocator& updateBuffer(const T* src, size_t size, size_t offset){
@@ -107,14 +113,18 @@ namespace yic {
 
     protected:
         void free() const{
-            mDevice.destroy(mBuffer.buffer);
-            mDevice.free(mBuffer.deviceMemory);
+            if (mBuffer.buffer){
+                mDevice.destroy(mBuffer.buffer);
+            }
+            if (mBuffer.deviceMemory){
+                mDevice.free(mBuffer.deviceMemory);
+            }
         }
     };
 
     class genericBufferManager : public vkAllocator{
     public:
-        ~genericBufferManager() { if (mUnmap) unmap(); }
+        ~genericBufferManager() { if (mUnmap) unmap(); free(); }
 
         MemReqs memReqs = [this](){return vk::MemoryRequirements{mDevice.getBufferMemoryRequirements(mBuffer.buffer)};};
         BindMem bindMem = [this](){ mDevice.bindBufferMemory(mBuffer.buffer, mBuffer.deviceMemory, 0); };
@@ -129,7 +139,7 @@ namespace yic {
 
     class genericAccelerationManager : public vkAllocator{
     public:
-        ~genericAccelerationManager() { if (mUnmap) unmap(); };
+        ~genericAccelerationManager() { if (mUnmap) unmap(); free();};
 
         genericAccelerationManager(vk::DeviceSize deviceSize, vk::BufferUsageFlags usage){
             allocBufferDeviceAddress(deviceSize, nullptr, usage, defaultMemReqs, defaultBindMem, false);
@@ -166,11 +176,20 @@ namespace yic {
 
 struct allocManager{
     using bufUptr = std::unique_ptr<yic::genericBufferManager>;
+    using bufSptr = std::shared_ptr<yic::genericBufferManager>;
     using bufAccelAddressUptr = std::unique_ptr<yic::genericAccelerationManager>;
 
     struct build{
         static bufAccelAddressUptr bufAccelAddressUptr(vk::DeviceSize deviceSize, vk::BufferUsageFlags usage){
             return std::make_unique<yic::genericAccelerationManager>(deviceSize, usage);
+        }
+
+        static bufUptr bufUptr(vk::DeviceSize deviceSize, vk::BufferUsageFlags usage){
+            return std::make_unique<yic::genericBufferManager>(deviceSize, usage);
+        }
+
+        static bufSptr bufSptr(vk::DeviceSize deviceSize, vk::BufferUsageFlags usage){
+            return std::make_shared<yic::genericBufferManager>(deviceSize, usage);
         }
     };
 

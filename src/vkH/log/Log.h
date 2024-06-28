@@ -10,6 +10,9 @@
 #include "include/spdlog/fmt/ostr.h"
 #include "include/spdlog/sinks/ansicolor_sink.h"
 
+#include "include/spdlog/sinks/base_sink.h"
+#include "include/spdlog/details/null_mutex.h"
+
 #include "nonCopyable.h"
 
 
@@ -18,6 +21,7 @@ namespace yic {
     class Log : public nonCopyable{
     public:
         static void init();
+        static void addSinks(spdlog::sink_ptr sink) { mSinks.emplace_back(sink); }
 
         inline static std::shared_ptr<spdlog::logger> &getLogger() { return logger_; }
         inline static std::shared_ptr<spdlog::logger> &getCustomLogger() { return customLogger_; }
@@ -25,9 +29,14 @@ namespace yic {
     private:
         static std::shared_ptr<spdlog::logger> logger_;
         static std::shared_ptr<spdlog::logger> customLogger_;
+
+        static std::vector<spdlog::sink_ptr> mSinks;
     };
 
+
 } // yic
+
+
 
 #define vkTrance(...)    ::yic::Log::getLogger()->trace(__VA_ARGS__)
 #define vkInfo(...)      ::yic::Log::getLogger()->info(__VA_ARGS__)

@@ -11,6 +11,8 @@
 #include "vk_context.h"
 #include "editor/vkImgui_context.h"
 
+#include "json/baseSetting.h"
+
 namespace yic {
 
     class RHI : public nonCopyable{
@@ -28,6 +30,7 @@ namespace yic {
 
     private:
         std::thread mThread;
+        std::streambuf *mOldCoutBuf{};
 
     private:
         std::chrono::time_point<std::chrono::high_resolution_clock> mStart;

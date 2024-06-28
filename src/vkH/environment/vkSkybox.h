@@ -29,7 +29,7 @@ namespace yic {
     public:
         vkSkybox(vk_init* vkInit, vkSwapchain& swapchain);
 
-        vkSkybox& renderSkybox();
+        vkSkybox& renderSkybox(const bool& render);
         vkSkybox& updateEveryFrame(){
             updateCameraVec();
             return recreate();

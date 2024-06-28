@@ -3,11 +3,12 @@
 //
 
 #include "vkPipeline.h"
+#include "json/baseSetting.h"
 
 namespace yic {
 
     graphicsPipelineState::graphicsPipelineState() {
-        inputAssemblyState.setTopology(vk::PrimitiveTopology::eTriangleList)
+        inputAssemblyState.setTopology(baseSetting::GetPrimitiveTopology())
                 .setPrimitiveRestartEnable({});
 
         vertexInputState.setVertexAttributeDescriptions({})
@@ -42,12 +43,14 @@ namespace yic {
                 .setMaxDepthBounds({});
 
         colorBlendState.setLogicOpEnable({})
-            //    .setLogicOp(vk::LogicOp::eClear)
                 .setAttachments({});
-           //     .setBlendConstants({0.f, 0.f, 0.f, 0.f});
     }
 
     void graphicsPipelineState::updateState() {
+        if (blendAttachmentStates.empty()){
+            blendAttachmentStates.emplace_back(makePipelineColorBlendAttachments());
+            colorBlendState.setAttachments(blendAttachmentStates);
+        }
         colorBlendState.setAttachments(blendAttachmentStates);
 
         dynamicState.setDynamicStates(dynamicStates);

@@ -1,23 +1,10 @@
 #version 450
 
 layout (set = 0, binding = 0) uniform cameraVectors {
-    //    vec4 forwards;
-    //    vec4 right;
-    //    vec4 up;
-
     mat4 vpMatrix;
 } camera;
 
 layout (location = 0) out vec3 forwards;
-
-//const vec2 screenCorners[6] = {
-//    vec2(-1.f, -1.f),
-//    vec2(-1.f,  1.f),
-//    vec2( 1.f,  1.f),
-//    vec2( 1.f,  1.f),
-//    vec2( 1.f, -1.f),
-//    vec2(-1.f, -1.f)
-//};
 
 const vec3 cubeVertices[36] = {
     // Front Face

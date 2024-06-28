@@ -7,6 +7,13 @@
 
 #include "modelTransformManager.h"
 #include "nfd.h"
+#include "json/vkProject.h"
+#include "json/baseSetting.h"
+
+#include "pmx/pmx_context.h"
+#include "model/modelManager.h"
+
+#include "terminal/ImGuiTerminal.h"
 
 namespace yic {
 
@@ -36,10 +43,16 @@ namespace yic {
        vkImgui& setShowDemo(bool demo = true){ mShowDemo = demo; return *this;};
     private:
         bool mShowDemo{true};
+        bool mDefaultWindow{true};
+        bool mBaseSettings{false};
         vk::Extent2D mExtent;
         imguiContext& mImguiContext;
 
         glm::vec3 translation{1.f, 0.f, 0.f};
+        js::vkProject mProj;
+
+        // test
+        std::vector<std::string> objs = {"Character", "Scene"};
     };
 
 
