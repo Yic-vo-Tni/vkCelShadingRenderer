@@ -16,32 +16,32 @@
 - 然后应该就可以直接在CLion里面运行了吧 = - =
 
 ## 效果图
-<div style="text-align: center">
+<p align="center">
   <img src="ReadMeImage/img_2.png" width="900" height="600" alt="">
   <br>
-  <em>模型渲染</em>
-</div>
+<em>模型渲染</em>
+</p>
 
-<div style="text-align: center">
+<p align="center">
   <img src="ReadMeImage/img_3.png" width="900" height="600" alt="">
   <br>
 <em>材质更改</em>
-</div>
+</p>
 
-<div style="text-align: center">
+<p align="center">
   <img src="ReadMeImage/img_4.png" width="900" height="600" alt="">
   <br>
-<em>渲染效果设置更改</em>
-</div>
+<em>线框绘制</em>
+</p>
 
-<div style="text-align: center">
+<p align="center">
   <img src="ReadMeImage/img_5.png" width="900" height="600" alt="">
   <br>
 <em>模型编辑</em>
-</div>
+</p>
 
-<div style="text-align: center">
+<p align="center">
   <img src="ReadMeImage/img_6.png" width="900" height="600" alt="">
   <br>
 <em>vmd播放</em>
-</div>
+</p>
